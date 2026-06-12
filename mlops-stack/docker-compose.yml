@@ -34,11 +34,14 @@ services:
       - mlops-net
 
   model-trainer:
-    build: ./model-trainer
+    build:
+      context: .
+      dockerfile: model-trainer/Dockerfile
     container_name: model-trainer
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5001
       MLFLOW_ARTIFACT_ROOT: /mlflow/artifacts
+      MODEL_CONFIG: /app/configs/iris-classifier.yaml
     volumes:
       - mlflow-data:/mlflow
     depends_on:
@@ -48,7 +51,9 @@ services:
       - mlops-net
 
   inference-api:
-    build: ./inference-api
+    build:
+      context: .
+      dockerfile: inference-api/Dockerfile
     container_name: inference-api
     restart: unless-stopped          # NUEVO
     ports:
@@ -57,6 +62,7 @@ services:
       MLFLOW_TRACKING_URI: http://mlflow:5001
       MODEL_NAME: iris-classifier
       MODEL_STAGE: Production
+      MODEL_CONFIG: /app/configs/iris-classifier.yaml
     volumes:
       - mlflow-data:/mlflow
     depends_on:
@@ -72,15 +78,17 @@ services:
       - mlops-net
 
   drift-detector:
-    build: ./drift-detector
+    build:
+      context: .
+      dockerfile: drift-detector/Dockerfile
     container_name: drift-detector
     restart: unless-stopped          # NUEVO
     environment:
       MLFLOW_TRACKING_URI:       http://mlflow:5001
       INFERENCE_API_URL:         http://inference-api:8000
-      MODEL_NAME:                iris-classifier
+      MODEL_CONFIG:              /app/configs/iris-classifier.yaml
       KS_P_VALUE_THRESHOLD:      "0.05"
-      CHI2_P_VALUE_THRESHOLD:    "0.05"
+      CONCEPT_DRIFT_P_VALUE_THRESHOLD: "0.05"
       CONSECUTIVE_DRIFT_WINDOWS: "2"
       WINDOW_SIZE:               "30"
       CHECK_INTERVAL_S:          "30"
@@ -98,13 +106,16 @@ services:
 
   # test-runner: sin restart — se ejecuta manualmente o desde CI
   test-runner:
-    build: ./tests
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
     container_name: test-runner
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5001
       INFERENCE_API_URL:   http://inference-api:8000
       MODEL_NAME:          iris-classifier
       MODEL_STAGE:         Production
+      MODEL_CONFIG:        /app/configs/iris-classifier.yaml
       GATE_MIN_ACCURACY:   "0.90"
       GATE_MIN_F1:         "0.90"
       GATE_MAX_LATENCY_MS: "500"
