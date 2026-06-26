@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ejecución: Arquitectura Agéntica + Despliegue MLOps</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg:      #0a0e14;
+  --surf:    #111722;
+  --surf2:   #161e2c;
+  --border:  #1e2a3a;
+  --text:    #c9d1d9;
+  --muted:   #6e7681;
+  --dim:     #3d4a5c;
+
+  --blue:    #4a9eda;
+  --green:   #3dba6e;
+  --orange:  #f0a742;
+  --purple:  #b07fff;
+  --red:     #f06060;
+  --cyan:    #56d0e0;
+  --lime:    #c9e13a;
+  --yellow:  #ffd166;
+  --white:   #e6edf3;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* ─── NAV ─── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,14,20,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 48px;
+  overflow-x: auto;
+}
+.nav-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  margin-right: 24px;
+  flex-shrink: 0;
+}
+.nav-link {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0 14px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.nav-link:hover { color: var(--white); border-bottom-color: var(--dim); }
+.nav-link.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ─── LAYOUT ─── */
+.page { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* ─── COVER ─── */
+.cover {
+  padding: 64px 0 48px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 56px;
+}
+.cover-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 16px;
+}
+.cover h1 {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.2;
+  letter-spacing: -.5px;
+  margin-bottom: 16px;
+}
+.cover h1 span { color: var(--green); }
+.cover-sub {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 640px;
+  margin-bottom: 28px;
+  line-height: 1.7;
+}
+.cover-meta { display: flex; flex-wrap: wrap; gap: 10px; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.pill-blue   { color: var(--blue);   border-color: rgba(74,158,218,.35);  background: rgba(74,158,218,.08); }
+.pill-green  { color: var(--green);  border-color: rgba(61,186,110,.35);  background: rgba(61,186,110,.08); }
+.pill-orange { color: var(--orange); border-color: rgba(240,167,66,.35);  background: rgba(240,167,66,.08); }
+.pill-muted  { color: var(--muted);  border-color: var(--border);         background: var(--surf); }
+
+/* ─── SECTIONS ─── */
+.section { margin-bottom: 64px; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.section h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -.3px;
+  margin-bottom: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-intro {
+  margin: 16px 0 28px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ─── MAPPING TABLE ─── */
+.map-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.map-table th {
+  text-align: left;
+  padding: 8px 14px;
+  background: var(--surf2);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.map-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+.map-table tr:last-child td { border-bottom: none; }
+.map-table tr:hover td { background: rgba(255,255,255,.02); }
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.tag-blue   { color: var(--blue);   background: rgba(74,158,218,.12); }
+.tag-green  { color: var(--green);  background: rgba(61,186,110,.12); }
+.tag-orange { color: var(--orange); background: rgba(240,167,66,.12); }
+.tag-purple { color: var(--purple); background: rgba(176,127,255,.12); }
+.tag-red    { color: var(--red);    background: rgba(240,96,96,.12); }
+.tag-yellow { color: var(--yellow); background: rgba(255,209,102,.12); }
+.tag-cyan   { color: var(--cyan);   background: rgba(86,208,224,.12); }
+
+/* ─── CODE BLOCKS ─── */
+.code-block {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surf2);
+  border-bottom: 1px solid var(--border);
+}
+.code-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+}
+pre {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.c-comment { color: var(--dim); }
+.c-cmd     { color: var(--blue); }
+.c-flag    { color: var(--orange); }
+.c-str     { color: var(--green); }
+.c-key     { color: var(--purple); }
+.c-val     { color: var(--yellow); }
+.c-muted   { color: var(--muted); }
+.c-green   { color: var(--green); }
+.c-cyan    { color: var(--cyan); }
+
+/* ─── STEP FLOW ─── */
+.flow-container { position: relative; }
+.flow-step {
+  display: flex;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-left {
+  flex-shrink: 0;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.flow-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.flow-line {
+  width: 1px;
+  flex: 1;
+  min-height: 20px;
+  background: var(--border);
+}
+.flow-right { flex: 1; padding-top: 6px; }
+.flow-agent {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: .5px;
+}
+.flow-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.flow-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.flow-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-top: 8px;
+  border: 1px solid;
+}
+
+/* step colors */
+.fs-blue   .flow-num { background: rgba(74,158,218,.15);  color: var(--blue);   border: 1px solid rgba(74,158,218,.3); }
+.fs-blue   .flow-agent { color: var(--blue); }
+.fs-blue   .flow-event { color: var(--blue);   border-color: rgba(74,158,218,.3);  background: rgba(74,158,218,.08); }
+
+.fs-green  .flow-num { background: rgba(61,186,110,.15);  color: var(--green);  border: 1px solid rgba(61,186,110,.3); }
+.fs-green  .flow-agent { color: var(--green); }
+.fs-green  .flow-event { color: var(--green);  border-color: rgba(61,186,110,.3);  background: rgba(61,186,110,.08); }
+
+.fs-orange .flow-num { background: rgba(240,167,66,.15);  color: var(--orange); border: 1px solid rgba(240,167,66,.3); }
+.fs-orange .flow-agent { color: var(--orange); }
+.fs-orange .flow-event { color: var(--orange); border-color: rgba(240,167,66,.3);  background: rgba(240,167,66,.08); }
+
+.fs-purple .flow-num { background: rgba(176,127,255,.15); color: var(--purple); border: 1px solid rgba(176,127,255,.3); }
+.fs-purple .flow-agent { color: var(--purple); }
+.fs-purple .flow-event { color: var(--purple); border-color: rgba(176,127,255,.3); background: rgba(176,127,255,.08); }
+
+.fs-red    .flow-num { background: rgba(240,96,96,.15);   color: var(--red);    border: 1px solid rgba(240,96,96,.3); }
+.fs-red    .flow-agent { color: var(--red); }
+.fs-red    .flow-event { color: var(--red);    border-color: rgba(240,96,96,.3);   background: rgba(240,96,96,.08); }
+
+.fs-cyan   .flow-num { background: rgba(86,208,224,.15);  color: var(--cyan);   border: 1px solid rgba(86,208,224,.3); }
+.fs-cyan   .flow-agent { color: var(--cyan); }
+.fs-cyan   .flow-event { color: var(--cyan);   border-color: rgba(86,208,224,.3);  background: rgba(86,208,224,.08); }
+
+/* ─── INFO CARDS ─── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.info-card {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.info-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.info-card p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ─── CALLOUT ─── */
+.callout {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  border: 1px solid;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.callout-body { line-height: 1.6; }
+.callout-body strong { font-weight: 600; }
+.callout-note   { border-color: rgba(74,158,218,.3);  background: rgba(74,158,218,.06); color: var(--blue); }
+.callout-warn   { border-color: rgba(240,167,66,.3);  background: rgba(240,167,66,.06); color: var(--orange); }
+.callout-tip    { border-color: rgba(61,186,110,.3);  background: rgba(61,186,110,.06); color: var(--green); }
+
+/* ─── YAML CONFIG ─── */
+.yaml-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 640px) {
+  .yaml-grid { grid-template-columns: 1fr; }
+  .agent-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── FOOTER ─── */
+.footer {
+  padding: 32px 0 0;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--dim);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">MLOPS · AGENTES</div>
+  <a href="#mapping"   class="nav-link">01 Mapeo Agente↔Servicio</a>
+  <a href="#stack"     class="nav-link">02 Levantar Stack</a>
+  <a href="#runner"    class="nav-link">03 Ejecutar Runner</a>
+  <a href="#flow"      class="nav-link">04 Flujo Completo</a>
+  <a href="#config"    class="nav-link">05 Configuración YAML</a>
+  <a href="#quickstart" class="nav-link">06 Quick Start</a>
+</nav>
+
+<div class="page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-eyebrow">Guía de Ejecución</div>
+    <h1>Arquitectura Agéntica<br><span>combinada con el despliegue MLOps</span></h1>
+    <p class="cover-sub">
+      Cómo levantar el stack Docker, instanciar el sistema multi-agente y ejecutar
+      el ciclo completo observe → decide → act integrado con los servicios reales
+      de inferencia, monitoreo y registro de modelos.
+    </p>
+    <div class="cover-meta">
+      <span class="pill pill-blue">6 Agentes</span>
+      <span class="pill pill-green">EventBus pub/sub</span>
+      <span class="pill pill-orange">Docker Compose</span>
+      <span class="pill pill-muted">mlops-stack/</span>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 1 — MAPEO -->
+  <div class="section" id="mapping">
+    <div class="section-label">Sección 01</div>
+    <h2>Mapeo Agente ↔ Servicio Docker</h2>
+    <p class="section-intro">
+      Cada agente del sistema <strong>no es un contenedor adicional</strong> — es la
+      abstracción de software de un servicio Docker que ya existe. El runner instancia
+      los 6 agentes en un mismo proceso Python y los conecta vía EventBus en memoria.
+    </p>
+
+    <table class="map-table">
+      <thead>
+        <tr>
+          <th>Agente</th>
+          <th>Rol (Eken et al.)</th>
+          <th>Servicio Docker</th>
+          <th>Responsabilidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-blue">MonitoringAgent</span></td>
+          <td><span class="tag tag-cyan">MON</span></td>
+          <td><code>drift-detector</code></td>
+          <td>Detecta data drift (KS-test) y performance drift por ventanas consecutivas</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-orange">OrchestratorAgent</span></td>
+          <td><span class="tag tag-orange">MLOE</span></td>
+          <td><code>nginx</code> + GitHub Actions</td>
+          <td>Coordina el pipeline completo; gestiona la máquina de estados global</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-green">DataScientistAgent</span></td>
+          <td><span class="tag tag-green">DS</span></td>
+          <td><code>model-trainer</code> + <code>mlflow</code></td>
+          <td>Entrena modelos vía <code>mlops_common</code>, registra en MLflow</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-purple">QAAgent</span></td>
+          <td><span class="tag tag-purple">QAE</span></td>
+          <td><code>test-runner</code></td>
+          <td>Valida métricas del modelo contra <code>quality_gates</code> del YAML</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-yellow">HumanProxyAgent</span></td>
+          <td><span class="tag tag-yellow">Human</span></td>
+          <td>Operador / CI manual</td>
+          <td>Aprobación o rechazo antes de promover a producción</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-red">MLEngineerAgent</span></td>
+          <td><span class="tag tag-red">MLE</span></td>
+          <td><code>inference-api</code> (:8000)</td>
+          <td>Hot-swap del modelo sin downtime vía <code>POST /reload</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-note">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>EventBus en memoria:</strong> en esta implementación el bus es síncrono
+        y en proceso. Para agentes distribuidos en múltiples hosts, reemplazar
+        <code>EventBus</code> con un adaptador a Redis Streams, NATS o RabbitMQ —
+        la interfaz <code>publish()</code> / <code>subscribe()</code> no cambia.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2 — STACK -->
+  <div class="section" id="stack">
+    <div class="section-label">Sección 02</div>
+    <h2>Levantar el Stack Docker</h2>
+    <p class="section-intro">
+      El sistema agéntico requiere que los servicios estén corriendo antes de ejecutar
+      el runner. El orden importa: MLflow debe estar <em>healthy</em> antes de que
+      cualquier agente intente registrar o leer modelos.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">Arranque paso a paso</span>
+        <span class="code-lang">bash · mlops-stack/</span>
+      </div>
+      <pre><span class="c-comment"># ── Paso 1: levantar MLflow (registro de modelos)</span>
+<span class="c-cmd">docker compose up -d mlflow</span>
+<span class="c-comment"># verificar que está healthy:</span>
+<span class="c-cmd">docker compose ps</span>
+
+<span class="c-comment"># ── Paso 2: entrenamiento inicial (una sola vez)</span>
+<span class="c-cmd">docker compose run --rm model-trainer</span>
+
+<span class="c-comment"># ── Paso 3: levantar inference, proxy y monitor</span>
+<span class="c-cmd">docker compose up -d inference-api nginx drift-detector</span></pre>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>TLS requerido:</strong> nginx necesita certificados antes de arrancar.
+        Generarlos con <code>bash generate-certs.sh localhost</code> si no existen.
+        Solo la primera vez.
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">
+          <span class="tag tag-blue">mlflow</span> Puerto expuesto
+        </div>
+        <p>Vinculado a <code>127.0.0.1:5001</code> — solo accesible desde el host local. Todos los agentes lo usan como tracking URI interna.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">
+          <span class="tag tag-red">inference-api</span> Puerto expuesto
+        </div>
+        <p>Vinculado a <code>127.0.0.1:8000</code>. El único punto público es nginx en 443. El agente MLE llama directamente a <code>/reload</code>.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">
+          <span class="tag tag-green">model-trainer</span> Contenedor efímero
+        </div>
+        <p>No es un servicio de larga duración — es un job que corre y termina. El agente DataScientist replica esta lógica internamente.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">
+          <span class="tag tag-cyan">drift-detector</span> Loop permanente
+        </div>
+        <p>Corre en background revisando drift periódicamente. En modo agéntico, el MonitoringAgent reemplaza este loop con ciclos discretos observe→decide→act.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3 — RUNNER -->
+  <div class="section" id="runner">
+    <div class="section-label">Sección 03</div>
+    <h2>Ejecutar el Runner Multi-Agente</h2>
+    <p class="section-intro">
+      <code>mlops_common/agents/runner.py</code> instancia los 6 agentes, los conecta al
+      EventBus y ejecuta N ciclos del pipeline completo. Tiene dos modos de operación.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">Modo automático — sin intervención humana</span>
+        <span class="code-lang">bash</span>
+      </div>
+      <pre><span class="c-comment"># Recomendado: dentro de Docker (tiene acceso a los servicios internos)</span>
+<span class="c-cmd">docker compose run --rm model-trainer \</span>
+  <span class="c-cmd">python -m mlops_common.agents.runner \</span>
+  <span class="c-flag">--auto-approve \</span>
+  <span class="c-flag">--cycles</span> <span class="c-val">5</span> <span class="c-flag">--interval</span> <span class="c-val">2.0</span> \
+  <span class="c-flag">--mlflow-uri</span> <span class="c-str">http://mlflow:5001</span> \
+  <span class="c-flag">--api-url</span> <span class="c-str">http://inference-api:8000</span> \
+  <span class="c-flag">--log-level</span> <span class="c-val">INFO</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">Modo interactivo — con aprobación humana</span>
+        <span class="code-lang">bash</span>
+      </div>
+      <pre><span class="c-comment"># Requiere -it para input interactivo</span>
+<span class="c-cmd">docker compose run --rm -it model-trainer \</span>
+  <span class="c-cmd">python -m mlops_common.agents.runner \</span>
+  <span class="c-flag">--cycles</span> <span class="c-val">5</span> \
+  <span class="c-flag">--mlflow-uri</span> <span class="c-str">http://mlflow:5001</span> \
+  <span class="c-flag">--api-url</span> <span class="c-str">http://inference-api:8000</span>
+
+<span class="c-comment"># Cuando QA pasa, el runner se pausa:</span>
+<span class="c-muted">  [runner] HUMAN DECISION REQUIRED</span>
+<span class="c-muted">  [runner] Model details: {run_id: ..., metrics: {...}}</span>
+<span class="c-muted">  Approve? [y/n]: </span><span class="c-green">y</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">Parámetros del runner</span>
+        <span class="code-lang">CLI reference</span>
+      </div>
+      <pre><span class="c-flag">--auto-approve</span>       <span class="c-comment">omite la aprobación humana (HumanProxy en modo auto)</span>
+<span class="c-flag">--cycles</span> <span class="c-val">N</span>           <span class="c-comment">número de ciclos observe→decide→act (default: 5)</span>
+<span class="c-flag">--interval</span> <span class="c-val">N</span>         <span class="c-comment">segundos entre ciclos (default: 2.0)</span>
+<span class="c-flag">--drift-threshold</span> <span class="c-val">N</span> <span class="c-comment">ventanas consecutivas para disparar retrain (default: 2)</span>
+<span class="c-flag">--mlflow-uri</span> <span class="c-val">URL</span>     <span class="c-comment">URI del tracking server (default: http://mlflow:5001)</span>
+<span class="c-flag">--api-url</span> <span class="c-val">URL</span>        <span class="c-comment">URL del inference-api (default: http://inference-api:8000)</span>
+<span class="c-flag">--log-level</span> <span class="c-val">LEVEL</span>    <span class="c-comment">DEBUG | INFO | WARNING (default: INFO)</span></pre>
+    </div>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">✓</span>
+      <div class="callout-body">
+        <strong>Desde fuera de Docker:</strong> si tienes el entorno Python local con
+        <code>pip install -e mlops-stack/</code>, correr directamente con
+        <code>python -m mlops_common.agents.runner --mlflow-uri http://localhost:5001 --api-url http://localhost:8000</code>
+        también funciona.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 4 — FLUJO -->
+  <div class="section" id="flow">
+    <div class="section-label">Sección 04</div>
+    <h2>Flujo Completo — Ciclo de 10 Pasos</h2>
+    <p class="section-intro">
+      En cada ciclo del runner, los agentes se ejecutan en orden fijo:
+      MON → ORCH → DS → QA → Human → MLE. Cada uno corre su ciclo
+      <strong>observe → decide → act</strong> y publica eventos en el EventBus
+      que activan a los agentes siguientes.
+    </p>
+
+    <div class="flow-container">
+
+      <div class="flow-step fs-cyan">
+        <div class="flow-left">
+          <div class="flow-num">01</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="flow-agent">MonitoringAgent · MON · drift-detector</div>
+          <div class="flow-title">Observa el sistema y detecta drift</div>
+          <div class="flow-desc">
+            <strong>observe()</strong> — carga el dataset de referencia desde la config YAML,
+            consulta <code>/health</code> del inference-api, y ejecuta KS-test por feature
+            contra muestras actuales.<br><br>
+            <strong>decide()</strong> — si <code>consecutive_drift &gt;= drift_threshold</code>
+            (default 2), decide <code>trigger_retrain</code>.<br><br>
+            <strong>act()</strong> — publica <code>drift.detected</code> en el EventBus con
+            la lista de features afectadas.
+          </div>
+          <span class="flow-event">→ drift.detected</span>
+        </div>
+      </div>
+
+      <div class="flow-step fs-orange">
+        <div class="flow-left">
+          <div class="flow-num">02</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="flow-agent">OrchestratorAgent · MLOE · nginx + CI/CD</div>
+          <div class="flow-title">Recibe drift → activa reentrenamiento</div>
+          <div class="flow-desc">
+            <strong>observe()</strong> — drena la cola de eventos recibidos vía
+            <code>on_message()</code>.<br><br>
+            <strong>decide()</strong> — si recibe <code>drift.detected</code> y estado es
+            <code>idle</code>, decide <code>trigger_retrain</code>.<br><br>
+            <strong>act()</strong> — publica <code>retrain.triggered</code> y transiciona
+            su estado: <code>idle → retraining → qa_pending</code>.
+          </div>
+          <span class="flow-event">→ retrain.triggered</span>
+        </div>
+      </div>
+
+      <div class="flow-step fs-green">
+        <div class="flow-left">
+          <div class="flow-num">03</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="flow-agent">DataScientistAgent · DS · model-trainer + mlflow</div>
+          <div class="flow-title">Entrena y registra el modelo challenger</div>
+          <div class="flow-desc">
+            Recibe <code>retrain.triggered</code> vía suscripción.<br><br>
+            <strong>act()</strong> ejecuta el pipeline completo:
+            <code>load_config()</code> → <code>get_data_source()</code> →
+            <code>get_model_strategy()</code> → <code>train_test_split()</code> →
+            <code>fit()</code> → <code>compute_metrics()</code> → <code>mlflow.log_*</code>.<br><br>
+            Al finalizar publica <code>model.trained</code> con <code>run_id</code>,
+            métricas y metadata del config.
+          </div>
+          <span class="flow-event">→ model.trained</span>
+        </div>
+      </div>
+
+      <div class="flow-step fs-purple">
+        <div class="flow-left">
+          <div class="flow-num">04</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="flow-agent">QAAgent · QAE · test-runner</div>
+          <div class="flow-title">Evalúa quality gates del modelo</div>
+          <div class="flow-desc">
+            Recibe <code>model.trained</code> con las métricas calculadas.<br><br>
+            <strong>act()</strong> — itera sobre <code>quality_gates</code> del YAML
+            (ej. <code>min_accuracy: 0.90</code>, <code>min_f1: 0.90</code>) y compara
+            contra las métricas del modelo. Acumula <code>failures</code>.<br><br>
+            Si todo pasa → <code>qa.passed</code>. Si algún gate falla → <code>qa.failed</code>
+            y el pipeline se detiene.
+          </div>
+          <span class="flow-event">→ qa.passed <span class="c-muted">|</span> qa.failed</span>
+        </div>
+      </div>
+
+      <div class="flow-step fs-yellow" style="--flow-c: var(--yellow);">
+        <div class="flow-left" style="--flow-c: var(--yellow);">
+          <div class="flow-num" style="background:rgba(255,209,102,.15);color:var(--yellow);border:1px solid rgba(255,209,102,.3);">05</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="flow-agent" style="color:var(--yellow);">OrchestratorAgent — decisión de aprobación</div>
+          <div class="flow-title">QA pasó → solicitar aprobación o promover auto</div>
+          <div class="flow-desc">
+            Recibe <code>qa.passed</code> con estado <code>qa_pending</code>.<br><br>
+            Si <code>auto_approve=True</code> → decide <code>promote</code> y publica
+            <code>model.promoted</code> directamente.<br><br>
+            Si <code>auto_approve=False</code> → decide <code>request_approval</code>,
+            publica <code>approval.requested</code> y transiciona a
+            <code>approval_pending</code>.
+          </div>
+          <span class="flow-event" style="color:var(--yellow);border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.08);">→ approval.requested <span class="c-muted">|</span> model.promoted</span>
+        </div>
+      </div>
+
+      <div class="flow-step" style="border-bottom:1px solid var(--border);">
+        <div class="flow-left">
+          <div class="flow-num" style="background:rgba(255,209,102,.1);color:var(--yellow);border:1px solid rgba(255,209,102,.25);">06</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="flow-agent" style="color:var(--yellow);">HumanProxyAgent · Human · Operador</div>
+          <div class="flow-title">Aprobación humana (si no es auto-approve)</div>
+          <div class="flow-desc">
+            El runner se pausa y muestra en consola los detalles del modelo.
+            El operador responde <code>y</code> o <code>n</code>.<br><br>
+            <code>approve()</code> → llama <code>orchestrator.approve()</code> →
+            publica <code>model.promoted</code>.<br><br>
+            <code>reject(reason)</code> → llama <code>orchestrator.reject()</code> →
+            publica <code>model.rejected</code> → pipeline regresa a <code>idle</code>.
+          </div>
+          <span class="flow-event" style="color:var(--yellow);border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.08);">→ model.promoted <span class="c-muted">|</span> model.rejected</span>
+        </div>
+      </div>
+
+      <div class="flow-step fs-red" style="border-bottom:none;">
+        <div class="flow-left">
+          <div class="flow-num">07</div>
+        </div>
+        <div class="flow-right">
+          <div class="flow-agent">MLEngineerAgent · MLE · inference-api</div>
+          <div class="flow-title">Hot-swap del modelo — sin downtime</div>
+          <div class="flow-desc">
+            Recibe <code>model.promoted</code> vía suscripción.<br><br>
+            <strong>observe()</strong> — consulta <code>/health</code> e <code>/info</code>
+            del inference-api para verificar que está disponible.<br><br>
+            <strong>act()</strong> — ejecuta <code>POST inference-api:8000/reload</code>.
+            La API carga el modelo <code>Production</code> más nuevo desde MLflow sin
+            reiniciar el contenedor. Publica <code>model.reloaded</code>.<br><br>
+            El Orchestrator recibe <code>model.reloaded</code> → estado vuelve a
+            <code>idle</code>. <strong>Pipeline completo.</strong>
+          </div>
+          <span class="flow-event">→ model.reloaded</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN 5 — CONFIG -->
+  <div class="section" id="config">
+    <div class="section-label">Sección 05</div>
+    <h2>Configuración YAML — Control del Comportamiento</h2>
+    <p class="section-intro">
+      El archivo <code>configs/iris-classifier.yaml</code> (montado en
+      <code>/app/configs/</code> dentro de los contenedores) es el único punto de
+      configuración que todos los agentes leen. Cambiar el YAML cambia el comportamiento
+      del pipeline sin tocar código.
+    </p>
+
+    <div class="yaml-grid">
+      <div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-title">quality_gates → QAAgent</span>
+            <span class="code-lang">yaml</span>
+          </div>
+          <pre><span class="c-key">quality_gates</span>:
+  <span class="c-key">min_accuracy</span>: <span class="c-val">0.90</span>   <span class="c-comment"># QA falla si &lt; 0.90</span>
+  <span class="c-key">min_f1</span>: <span class="c-val">0.90</span>
+  <span class="c-key">min_per_class_recall</span>: <span class="c-val">0.80</span>
+  <span class="c-key">max_cv_std</span>: <span class="c-val">0.05</span>     <span class="c-comment"># QA falla si &gt; 0.05</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-title">drift → MonitoringAgent</span>
+            <span class="code-lang">yaml</span>
+          </div>
+          <pre><span class="c-key">drift</span>:
+  <span class="c-key">data_drift_p_value</span>: <span class="c-val">0.05</span>  <span class="c-comment"># umbral KS-test</span>
+  <span class="c-key">performance</span>:
+    <span class="c-key">consecutive_windows</span>: <span class="c-val">2</span> <span class="c-comment"># = --drift-threshold</span>
+    <span class="c-key">p_value_threshold</span>: <span class="c-val">0.05</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-title">model → DataScientistAgent</span>
+            <span class="code-lang">yaml</span>
+          </div>
+          <pre><span class="c-key">model</span>:
+  <span class="c-key">family</span>: <span class="c-str">random_forest_classifier</span>
+  <span class="c-key">params</span>:
+    <span class="c-key">n_estimators</span>: <span class="c-val">200</span>
+    <span class="c-key">max_depth</span>: <span class="c-val">8</span>
+    <span class="c-key">random_state</span>: <span class="c-val">42</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-title">Cambiar caso de uso</span>
+            <span class="code-lang">bash</span>
+          </div>
+          <pre><span class="c-comment"># Regresión + CSV + DVC en lugar de Iris</span>
+<span class="c-cmd">docker compose run --rm \</span>
+  <span class="c-flag">-e</span> <span class="c-key">MODEL_CONFIG</span>=<span class="c-str">/app/configs/custom-regressor-dvc.yaml</span> \
+  <span class="c-cmd">model-trainer \</span>
+  <span class="c-cmd">python -m mlops_common.agents.runner \</span>
+  <span class="c-flag">--auto-approve</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-note">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>Variable de entorno MODEL_CONFIG:</strong> todos los agentes llaman
+        <code>load_config()</code> que lee esta variable. Si no está definida, usa
+        <code>/app/configs/iris-classifier.yaml</code> como default.
+        Permite múltiples casos de uso en el mismo stack sin modificar código.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 6 — QUICK START -->
+  <div class="section" id="quickstart">
+    <div class="section-label">Sección 06</div>
+    <h2>Quick Start — Todo Junto</h2>
+    <p class="section-intro">
+      Secuencia completa desde cero: infraestructura, entrenamiento inicial,
+      y ejecución del sistema agéntico en modo automático.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">Secuencia completa</span>
+        <span class="code-lang">bash · mlops-stack/</span>
+      </div>
+      <pre><span class="c-comment"># ── 0. Prerrequisito: generar certs TLS (solo la primera vez)</span>
+<span class="c-cmd">bash generate-certs.sh localhost</span>
+
+<span class="c-comment"># ── 1. Levantar infraestructura</span>
+<span class="c-cmd">docker compose up -d mlflow</span>
+<span class="c-cmd">docker compose run --rm model-trainer</span>           <span class="c-comment"># entrenamiento inicial</span>
+<span class="c-cmd">docker compose up -d inference-api nginx drift-detector</span>
+
+<span class="c-comment"># ── 2. Verificar que todo está up</span>
+<span class="c-cmd">docker compose ps</span>
+<span class="c-muted">  mlflow          healthy</span>
+<span class="c-muted">  inference-api   healthy</span>
+<span class="c-muted">  nginx           running</span>
+<span class="c-muted">  drift-detector  running</span>
+
+<span class="c-comment"># ── 3. Ejecutar el sistema agéntico (5 ciclos, auto-approve)</span>
+<span class="c-cmd">docker compose run --rm model-trainer \</span>
+  <span class="c-cmd">python -m mlops_common.agents.runner \</span>
+  <span class="c-flag">--auto-approve</span> \
+  <span class="c-flag">--cycles</span> <span class="c-val">5</span> \
+  <span class="c-flag">--interval</span> <span class="c-val">2.0</span> \
+  <span class="c-flag">--log-level</span> <span class="c-val">INFO</span>
+
+<span class="c-comment"># ── 4. Salida esperada (resumen de eventos al final):</span>
+<span class="c-muted">  DEMO COMPLETE — N events in history:</span>
+<span class="c-muted">  [monitoring]      drift.detected     → {drifted_features: [...]}</span>
+<span class="c-muted">  [orchestrator]    retrain.triggered  → {reason: ...}</span>
+<span class="c-muted">  [data_scientist]  model.trained      → {run_id: ..., metrics: {...}}</span>
+<span class="c-muted">  [qa_engineer]     qa.passed          → {run_id: ..., primary_value: 0.97}</span>
+<span class="c-muted">  [orchestrator]    model.promoted     → {}</span>
+<span class="c-muted">  [ml_engineer]     model.reloaded     → {status: ok, version: 2}</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">Comandos de diagnóstico</span>
+        <span class="code-lang">bash</span>
+      </div>
+      <pre><span class="c-comment"># Ver logs de un agente específico</span>
+<span class="c-cmd">docker compose logs drift-detector --tail 50</span>
+
+<span class="c-comment"># Verificar que inference-api tiene el modelo más nuevo</span>
+<span class="c-cmd">curl http://localhost:8000/info</span>
+
+<span class="c-comment"># Forzar hot-reload manual del modelo</span>
+<span class="c-cmd">curl -X POST http://localhost:8000/reload</span>
+
+<span class="c-comment"># Correr solo las pruebas de calidad (como lo haría QAAgent)</span>
+<span class="c-cmd">docker compose run --rm test-runner</span></pre>
+    </div>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">✓</span>
+      <div class="callout-body">
+        <strong>El historial del EventBus</strong> al final de la demo es la traza
+        completa del pipeline agéntico. Cada línea es un <code>AgentMessage</code>
+        con <code>sender</code>, <code>topic</code> y <code>payload</code> — útil
+        para auditoría y debugging del flujo.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>mlops-stack/ · refactor-generalization</span>
+    <span>Generado 2026-06-26</span>
+  </div>
+
+</div>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
