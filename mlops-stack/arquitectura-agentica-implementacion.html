@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Implementación: Arquitectura Agéntica MLOps</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+:root {
+  --bg:#0a0e14;--surf:#111722;--surf2:#161e2c;--border:#1e2a3a;
+  --text:#c9d1d9;--muted:#6e7681;--dim:#3d4a5c;
+  --blue:#4a9eda;--green:#3dba6e;--orange:#f0a742;--purple:#b07fff;
+  --red:#f06060;--cyan:#56d0e0;--lime:#c9e13a;--yellow:#ffd166;--white:#e6edf3;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.65}
+nav{position:sticky;top:0;z-index:100;background:rgba(10,14,20,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;height:48px;overflow-x:auto}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--blue);letter-spacing:1px;white-space:nowrap;margin-right:24px;flex-shrink:0}
+.nav-link{font-size:11px;color:var(--muted);text-decoration:none;padding:0 14px;height:48px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;flex-shrink:0}
+.nav-link:hover{color:var(--white);border-bottom-color:var(--dim)}
+.nav-link.active{color:var(--blue);border-bottom-color:var(--blue)}
+.page{max-width:920px;margin:0 auto;padding:0 24px 80px}
+.cover{padding:64px 0 48px;border-bottom:1px solid var(--border);margin-bottom:56px}
+.cover-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:16px}
+.cover h1{font-size:36px;font-weight:700;color:var(--white);line-height:1.2;letter-spacing:-.5px;margin-bottom:16px}
+.cover h1 span{color:var(--blue)}
+.cover-sub{font-size:15px;color:var(--muted);max-width:620px;margin-bottom:28px}
+.cover-meta{display:flex;flex-wrap:wrap;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:'JetBrains Mono',monospace;padding:5px 12px;border-radius:20px;border:1px solid}
+.pill-blue{color:var(--blue);border-color:rgba(74,158,218,.35);background:rgba(74,158,218,.08)}
+.pill-green{color:var(--green);border-color:rgba(61,186,110,.35);background:rgba(61,186,110,.08)}
+.pill-muted{color:var(--muted);border-color:var(--border);background:var(--surf)}
+.section{margin-bottom:64px}
+.section-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.section h2{font-size:22px;font-weight:700;color:var(--white);letter-spacing:-.3px;margin-bottom:6px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.section-intro{margin:16px 0 28px;color:var(--text);font-size:14px;line-height:1.7}
+.concept{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.concept-tag{display:inline-block;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:4px;margin-bottom:12px}
+.concept h3{font-size:16px;font-weight:600;color:var(--white);margin-bottom:8px}
+.concept p{font-size:13px;color:var(--text);line-height:1.7}
+.concept-ref{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--dim)}
+.concept-ref span{color:var(--muted)}
+.agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.agent-card{border-radius:12px;border:1px solid;padding:20px}
+.agent-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.agent-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.agent-name{font-size:15px;font-weight:700;color:var(--white);line-height:1.2}
+.agent-role{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:3px;opacity:.75}
+.agent-service{font-size:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-family:'JetBrains Mono',monospace;color:var(--muted)}
+.agent-service strong{color:var(--white)}
+.task-list{list-style:none}
+.task-list li{font-size:12px;color:var(--muted);padding:4px 0 4px 14px;position:relative;border-bottom:1px solid rgba(255,255,255,.03)}
+.task-list li:last-child{border-bottom:none}
+.task-list li::before{content:'›';position:absolute;left:0;opacity:.5}
+.agent-ref{margin-top:14px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--dim);padding-top:10px;border-top:1px solid var(--border)}
+.ac-blue{border-color:rgba(74,158,218,.4);background:rgba(74,158,218,.04)}
+.ac-blue .agent-role,.ac-blue .agent-ref span{color:var(--blue)}
+.ac-green{border-color:rgba(61,186,110,.4);background:rgba(61,186,110,.04)}
+.ac-green .agent-role,.ac-green .agent-ref span{color:var(--green)}
+.ac-orange{border-color:rgba(240,167,66,.4);background:rgba(240,167,66,.04)}
+.ac-orange .agent-role,.ac-orange .agent-ref span{color:var(--orange)}
+.ac-purple{border-color:rgba(176,127,255,.4);background:rgba(176,127,255,.04)}
+.ac-purple .agent-role,.ac-purple .agent-ref span{color:var(--purple)}
+.ac-red{border-color:rgba(240,96,96,.4);background:rgba(240,96,96,.04)}
+.ac-red .agent-role,.ac-red .agent-ref span{color:var(--red)}
+.ac-yellow{border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.04)}
+.ac-yellow .agent-role,.ac-yellow .agent-ref span{color:var(--yellow)}
+.agent-card.full{grid-column:1/-1}
+.int-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px}
+.int-table th{text-align:left;padding:8px 14px;background:var(--surf2);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.int-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+.int-table tr:last-child td{border-bottom:none}
+.int-table tr:hover td{background:rgba(255,255,255,.02)}
+.tag{display:inline-block;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.flow-container{position:relative}
+.flow-step{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid var(--border)}
+.flow-step:last-child{border-bottom:none}
+.flow-left{flex-shrink:0;width:40px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.flow-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;flex-shrink:0;border:2px solid}
+.flow-connector{flex:1;width:1px;background:var(--border);min-height:20px}
+.flow-right{flex:1;padding-top:4px}
+.flow-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px}
+.flow-desc{font-size:13px;color:var(--muted);margin-bottom:10px}
+.flow-agents{display:flex;flex-wrap:wrap;gap:6px}
+.flow-code{margin-top:10px;background:var(--surf2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);white-space:pre;overflow-x:auto}
+.flow-code .comment{color:var(--dim)}
+.flow-code .kw{color:var(--purple)}
+.flow-code .str{color:var(--green)}
+.callout{border-radius:8px;padding:16px 20px;margin:20px 0;border:1px solid;font-size:13px;line-height:1.65}
+.callout strong{font-weight:600}
+.callout-blue{border-color:rgba(74,158,218,.4);background:rgba(74,158,218,.06);color:#a8d4f0}
+.callout-green{border-color:rgba(61,186,110,.4);background:rgba(61,186,110,.06);color:#90d4a8}
+.callout-yellow{border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.06);color:#f5dcaa}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;opacity:.8}
+.gap-table{width:100%;border-collapse:collapse;font-size:12px}
+.gap-table th{text-align:left;padding:8px 14px;background:var(--surf2);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.gap-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text)}
+.gap-table tr:last-child td{border-bottom:none}
+.tg-blue{background:rgba(74,158,218,.15);color:var(--blue)}
+.tg-green{background:rgba(61,186,110,.15);color:var(--green)}
+.tg-orange{background:rgba(240,167,66,.15);color:var(--orange)}
+.tg-purple{background:rgba(176,127,255,.15);color:var(--purple)}
+.tg-red{background:rgba(240,96,96,.15);color:var(--red)}
+.tg-yellow{background:rgba(255,209,102,.15);color:var(--yellow)}
+.tg-lime{background:rgba(201,225,58,.15);color:var(--lime)}
+.tg-muted{background:rgba(110,118,129,.15);color:var(--muted)}
+.tg-cyan{background:rgba(86,208,224,.15);color:var(--cyan)}
+.mt8{margin-top:8px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;color:var(--dim);font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.8}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">MLOps · Implementación Agéntica</span>
+  <a href="#framework"  class="nav-link">Framework</a>
+  <a href="#ciclo"      class="nav-link">Ciclo O-D-A</a>
+  <a href="#eventbus"   class="nav-link">EventBus</a>
+  <a href="#agentes"    class="nav-link">Agentes</a>
+  <a href="#topicos"    class="nav-link">Tópicos</a>
+  <a href="#maquina"    class="nav-link">Máquina de estados</a>
+  <a href="#ejecucion"  class="nav-link">Ejecución</a>
+</nav>
+
+<div class="page">
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-eyebrow">De la clase al código</div>
+  <h1>Implementación de la <span>Arquitectura Agéntica</span></h1>
+  <p class="cover-sub">
+    Traducción del diseño multi-agente conceptual (Eken et al. §3.3) a un framework
+    rule-based en Python: <code>observe() → decide() → act()</code> sobre el stack
+    MLOps Docker Compose existente.
+  </p>
+  <div class="cover-meta">
+    <span class="pill pill-blue">Rule-based · observe → decide → act</span>
+    <span class="pill pill-green">mlops_common/agents/</span>
+    <span class="pill pill-muted">6 agentes · EventBus pub/sub</span>
+  </div>
+</div>
+
+<!-- FRAMEWORK -->
+<section class="section" id="framework">
+  <div class="section-label">Parte 01</div>
+  <h2>Estructura del Framework</h2>
+  <p class="section-intro">
+    El framework vive en <code>mlops_common/agents/</code> — el mismo paquete compartido
+    por todos los servicios Docker. Cada agente es una clase Python que hereda de
+    <code>AgentBase</code> y se comunica con los demás vía <code>EventBus</code>.
+  </p>
+
+  <div class="flow-code" style="margin-bottom:24px">
+<span class="comment"># Estructura del paquete</span>
+mlops_common/agents/
+  __init__.py                  <span class="comment"># AGENT_REGISTRY + exports</span>
+  base.py                      <span class="comment"># AgentBase ABC + dataclasses</span>
+  event_bus.py                 <span class="comment"># EventBus pub/sub</span>
+  orchestrator_agent.py        <span class="comment"># MLOE — coordina todo</span>
+  data_scientist_agent.py      <span class="comment"># DS  — entrena modelos</span>
+  ml_engineer_agent.py         <span class="comment"># MLE — sirve/recarga modelo</span>
+  qa_agent.py                  <span class="comment"># QAE — quality gates</span>
+  monitoring_agent.py          <span class="comment"># MON — detecta drift</span>
+  human_proxy_agent.py         <span class="comment"># HUMAN — punto de aprobación</span>
+  runner.py                    <span class="comment"># Demo: orquesta todos los agentes</span></div>
+
+  <div class="callout callout-blue">
+    <div class="callout-label">Principio de diseño</div>
+    Los agentes <strong>no duplican</strong> la lógica existente en <code>train.py</code>,
+    <code>detector.py</code> o <code>app.py</code>. Son una <strong>capa de coordinación</strong>
+    que envuelve esos servicios, formalizando sus interacciones como un sistema multi-agente explícito.
+  </div>
+</section>
+
+<!-- CICLO O-D-A -->
+<section class="section" id="ciclo">
+  <div class="section-label">Parte 02</div>
+  <h2>El Ciclo observe → decide → act</h2>
+  <p class="section-intro">
+    Todo agente implementa tres métodos abstractos que forman un ciclo determinístico.
+    A diferencia de agentes LLM (que razonan con un modelo de lenguaje), estos agentes
+    son <strong>rule-based</strong>: las reglas de decisión son código Python explícito,
+    predecible y auditable.
+  </p>
+
+  <div class="concept">
+    <span class="concept-tag tg-cyan">ABC</span>
+    <h3>AgentBase — la clase base</h3>
+    <p>Cada agente hereda de <code>AgentBase</code> e implementa los tres métodos del ciclo.
+       El método <code>run_cycle()</code> los ejecuta en secuencia.</p>
+    <div class="flow-code" style="margin-top:16px">
+<span class="kw">class</span> AgentBase(ABC):
+
+    <span class="kw">def</span> __init__(self, name, role, bus):
+        self.name = name           <span class="comment"># "monitoring", "data_scientist", ...</span>
+        self.role = role           <span class="comment"># "MON", "DS", "MLE", "QAE", "MLOE"</span>
+        self.bus  = bus            <span class="comment"># EventBus compartido</span>
+
+    @abstractmethod
+    <span class="kw">def</span> observe(self) -> Observation: ...     <span class="comment"># ¿Qué ve del sistema?</span>
+
+    @abstractmethod
+    <span class="kw">def</span> decide(self, obs) -> Decision: ...    <span class="comment"># ¿Qué decide hacer?</span>
+
+    @abstractmethod
+    <span class="kw">def</span> act(self, dec) -> ActionResult: ...   <span class="comment"># ¿Qué ejecuta?</span>
+
+    <span class="kw">def</span> run_cycle(self) -> ActionResult:
+        obs    = self.observe()
+        dec    = self.decide(obs)
+        <span class="kw">if</span> dec.action == <span class="str">"noop"</span>: <span class="kw">return</span>
+        <span class="kw">return</span> self.act(dec)</div>
+  </div>
+
+  <table class="int-table mt16">
+    <thead><tr><th>Estructura</th><th>Campos</th><th>Propósito</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>Observation</code></td>
+        <td><code>data: dict</code>, <code>timestamp</code></td>
+        <td>Snapshot del estado del sistema en un instante</td>
+      </tr>
+      <tr>
+        <td><code>Decision</code></td>
+        <td><code>action: str</code>, <code>reason: str</code>, <code>params: dict</code></td>
+        <td>Qué hacer y por qué (auditable)</td>
+      </tr>
+      <tr>
+        <td><code>ActionResult</code></td>
+        <td><code>success: bool</code>, <code>detail: str</code>, <code>artifacts: dict</code></td>
+        <td>Resultado de la ejecución</td>
+      </tr>
+      <tr>
+        <td><code>AgentMessage</code></td>
+        <td><code>topic</code>, <code>payload</code>, <code>sender</code>, <code>timestamp</code></td>
+        <td>Mensaje inter-agente vía EventBus</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- EVENTBUS -->
+<section class="section" id="eventbus">
+  <div class="section-label">Parte 03</div>
+  <h2>EventBus: comunicación inter-agente</h2>
+  <p class="section-intro">
+    El EventBus implementa el patrón pub/sub en memoria. Cada agente publica
+    <code>AgentMessage</code> en tópicos; los agentes suscritos reciben el mensaje
+    como callback. El bus mantiene un historial completo para auditoría.
+  </p>
+
+  <div class="flow-code" style="margin-bottom:20px">
+<span class="comment"># Uso del EventBus</span>
+bus = EventBus()
+
+<span class="comment"># Agente MON publica cuando detecta drift</span>
+mon.publish(<span class="str">"drift.detected"</span>, {<span class="str">"features"</span>: [<span class="str">"petal_width"</span>]})
+
+<span class="comment"># El orquestador, suscrito a drift.detected, recibe el mensaje</span>
+<span class="comment"># automáticamente via on_message() y reacciona en su próximo ciclo</span></div>
+
+  <div class="callout callout-green">
+    <div class="callout-label">Extensibilidad</div>
+    Para escalar a múltiples hosts, reemplazar <code>EventBus</code> por un adaptador
+    a <strong>Redis Streams</strong>, <strong>NATS</strong> o <strong>RabbitMQ</strong>.
+    La interfaz <code>publish()/subscribe()</code> no cambia — los agentes no saben
+    si el bus es local o distribuido.
+  </div>
+</section>
+
+<!-- AGENTES -->
+<section class="section" id="agentes">
+  <div class="section-label">Parte 04</div>
+  <h2>Los 6 Agentes Implementados</h2>
+  <p class="section-intro">
+    Cada agente mapea 1:1 al rol de Eken et al. y al servicio Docker de la sesión conceptual.
+    Aquí se muestra qué hace cada uno en su ciclo <code>observe → decide → act</code>.
+  </p>
+
+  <div class="agent-grid">
+
+    <!-- MLOE -->
+    <div class="agent-card ac-blue full">
+      <div class="agent-header">
+        <div class="agent-icon">🎛️</div>
+        <div>
+          <div class="agent-name">OrchestratorAgent</div>
+          <div class="agent-role">MLOE — orchestrator_agent.py</div>
+        </div>
+      </div>
+      <div class="agent-service">
+        Máquina de estados: <strong>idle → retraining → qa_pending → approval_pending → promoting → idle</strong>
+      </div>
+      <ul class="task-list">
+        <li><strong>observe()</strong> — drena eventos pendientes del inbox</li>
+        <li><strong>decide()</strong> — evalúa la máquina de estados según el evento recibido</li>
+        <li><strong>act()</strong> — publica retrain.triggered, approval.requested, o model.promoted</li>
+        <li>Métodos adicionales: <code>approve()</code> / <code>reject()</code> para el humano</li>
+      </ul>
+      <div class="agent-ref">Suscrito a: <span>drift.detected, qa.passed, qa.failed, model.reloaded, system.error</span></div>
+    </div>
+
+    <!-- DS -->
+    <div class="agent-card ac-green">
+      <div class="agent-header">
+        <div class="agent-icon">🔬</div>
+        <div>
+          <div class="agent-name">DataScientistAgent</div>
+          <div class="agent-role">DS — data_scientist_agent.py</div>
+        </div>
+      </div>
+      <ul class="task-list">
+        <li><strong>observe()</strong> — verifica si hay request de retrain pendiente</li>
+        <li><strong>decide()</strong> — si retrain_requested → action="train"</li>
+        <li><strong>act()</strong> — carga config, entrena con mlops_common, registra en MLflow</li>
+        <li>Publica: <code>model.trained</code> con métricas y run_id</li>
+      </ul>
+      <div class="agent-ref">Suscrito a: <span>retrain.triggered</span></div>
+    </div>
+
+    <!-- MLE -->
+    <div class="agent-card ac-orange">
+      <div class="agent-header">
+        <div class="agent-icon">⚙️</div>
+        <div>
+          <div class="agent-name">MLEngineerAgent</div>
+          <div class="agent-role">MLE — ml_engineer_agent.py</div>
+        </div>
+      </div>
+      <ul class="task-list">
+        <li><strong>observe()</strong> — verifica health del inference-api y versión actual</li>
+        <li><strong>decide()</strong> — si reload_pending + API healthy → action="reload"</li>
+        <li><strong>act()</strong> — POST /reload al inference-api (hot-swap sin downtime)</li>
+        <li>Publica: <code>model.reloaded</code> con la nueva versión</li>
+      </ul>
+      <div class="agent-ref">Suscrito a: <span>model.promoted</span></div>
+    </div>
+
+    <!-- QAE -->
+    <div class="agent-card ac-purple">
+      <div class="agent-header">
+        <div class="agent-icon">🧪</div>
+        <div>
+          <div class="agent-name">QAAgent</div>
+          <div class="agent-role">QAE — qa_agent.py</div>
+        </div>
+      </div>
+      <ul class="task-list">
+        <li><strong>observe()</strong> — verifica si hay un modelo nuevo para validar</li>
+        <li><strong>decide()</strong> — si validation_pending → action="validate"</li>
+        <li><strong>act()</strong> — evalúa métricas vs quality_gates del YAML</li>
+        <li>Publica: <code>qa.passed</code> o <code>qa.failed</code></li>
+      </ul>
+      <div class="agent-ref">Suscrito a: <span>model.trained</span></div>
+    </div>
+
+    <!-- MON -->
+    <div class="agent-card ac-red">
+      <div class="agent-header">
+        <div class="agent-icon">📊</div>
+        <div>
+          <div class="agent-name">MonitoringAgent</div>
+          <div class="agent-role">MON — monitoring_agent.py</div>
+        </div>
+      </div>
+      <ul class="task-list">
+        <li><strong>observe()</strong> — calcula KS test por feature vs referencia</li>
+        <li><strong>decide()</strong> — si consecutive_drift >= threshold → action="trigger_retrain"</li>
+        <li><strong>act()</strong> — resetea contador y publica evento de drift</li>
+        <li>Publica: <code>drift.detected</code></li>
+      </ul>
+      <div class="agent-ref">Auto-driven: <span>no suscripciones — corre periódicamente</span></div>
+    </div>
+
+    <!-- HUMAN -->
+    <div class="agent-card ac-yellow">
+      <div class="agent-header">
+        <div class="agent-icon">👁️</div>
+        <div>
+          <div class="agent-name">HumanProxyAgent</div>
+          <div class="agent-role">HUMAN — human_proxy_agent.py</div>
+        </div>
+      </div>
+      <ul class="task-list">
+        <li><strong>observe()</strong> — verifica si hay aprobación pendiente</li>
+        <li><strong>decide()</strong> — si auto_mode → aprobar; si no → esperar input humano</li>
+        <li><strong>act()</strong> — en modo manual, expone approve()/reject() al operador</li>
+        <li>Soporta: CLI interactivo, HTTP endpoint, o auto-approve (tests)</li>
+      </ul>
+      <div class="agent-ref">Suscrito a: <span>approval.requested</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TÓPICOS -->
+<section class="section" id="topicos">
+  <div class="section-label">Parte 05</div>
+  <h2>Mapa de Tópicos del EventBus</h2>
+  <p class="section-intro">
+    Cada tópico corresponde a una fila de la matriz de interacción de la sesión conceptual.
+    Los tópicos están definidos como constantes en <code>Topics</code> (base.py).
+  </p>
+
+  <table class="gap-table">
+    <thead>
+      <tr>
+        <th>Tópico</th>
+        <th>Publica</th>
+        <th>Suscrito</th>
+        <th>Trigger Eken</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>drift.detected</code></td>
+        <td><span class="tag tg-red">MON</span></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td class="mono" style="color:var(--dim)">Event-driven §3.2.6</td>
+      </tr>
+      <tr>
+        <td><code>retrain.triggered</code></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td><span class="tag tg-green">DS</span></td>
+        <td class="mono" style="color:var(--dim)">Secuencial §3.2.6</td>
+      </tr>
+      <tr>
+        <td><code>model.trained</code></td>
+        <td><span class="tag tg-green">DS</span></td>
+        <td><span class="tag tg-purple">QAE</span></td>
+        <td class="mono" style="color:var(--dim)">Secuencial §3.2.6</td>
+      </tr>
+      <tr>
+        <td><code>qa.passed</code></td>
+        <td><span class="tag tg-purple">QAE</span></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td class="mono" style="color:var(--dim)">Secuencial §3.2.8</td>
+      </tr>
+      <tr>
+        <td><code>qa.failed</code></td>
+        <td><span class="tag tg-purple">QAE</span></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td class="mono" style="color:var(--dim)">Secuencial §3.2.8</td>
+      </tr>
+      <tr>
+        <td><code>approval.requested</code></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td><span class="tag tg-yellow">HUMAN</span></td>
+        <td class="mono" style="color:var(--dim)">Human-in-the-Loop §5.2.5</td>
+      </tr>
+      <tr>
+        <td><code>model.promoted</code></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td><span class="tag tg-orange">MLE</span></td>
+        <td class="mono" style="color:var(--dim)">Secuencial §3.2.5</td>
+      </tr>
+      <tr>
+        <td><code>model.reloaded</code></td>
+        <td><span class="tag tg-orange">MLE</span></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td class="mono" style="color:var(--dim)">Secuencial §3.2.5</td>
+      </tr>
+      <tr>
+        <td><code>system.error</code></td>
+        <td><span class="tag tg-muted">cualquiera</span></td>
+        <td><span class="tag tg-blue">MLOE</span></td>
+        <td class="mono" style="color:var(--dim)">Escalación §3.3</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- MÁQUINA DE ESTADOS -->
+<section class="section" id="maquina">
+  <div class="section-label">Parte 06</div>
+  <h2>Máquina de Estados del Orquestador</h2>
+  <p class="section-intro">
+    El <code>OrchestratorAgent</code> implementa los 10 pasos del flujo como una
+    máquina de estados finitos. Cada transición corresponde a un mensaje del EventBus.
+  </p>
+
+  <div class="flow-container">
+    <div class="flow-step">
+      <div class="flow-left">
+        <div class="flow-num" style="border-color:var(--muted);color:var(--muted)">idle</div>
+        <div class="flow-connector"></div>
+      </div>
+      <div class="flow-right">
+        <div class="flow-title">Estado inicial — esperando eventos</div>
+        <div class="flow-desc">El sistema está en producción normal. El agente MON corre sus ciclos periódicos.</div>
+        <div class="flow-agents">
+          <span class="tag tg-muted">drift.detected</span>
+          <span class="tag tg-muted">→ retraining</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-left">
+        <div class="flow-num" style="border-color:var(--green);color:var(--green)">rtrn</div>
+        <div class="flow-connector"></div>
+      </div>
+      <div class="flow-right">
+        <div class="flow-title">retraining → publica retrain.triggered</div>
+        <div class="flow-desc">El agente DS recibe el mensaje y entrena un nuevo modelo. Al publicar model.trained, el QAE lo recibe.</div>
+        <div class="flow-agents">
+          <span class="tag tg-green">DS entrena</span>
+          <span class="tag tg-muted">→ qa_pending</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-left">
+        <div class="flow-num" style="border-color:var(--purple);color:var(--purple)">qa</div>
+        <div class="flow-connector"></div>
+      </div>
+      <div class="flow-right">
+        <div class="flow-title">qa_pending — esperando resultado de QA</div>
+        <div class="flow-desc">El QAE evalúa las métricas contra los quality gates. Publica qa.passed o qa.failed.</div>
+        <div class="flow-agents">
+          <span class="tag tg-purple">QAE valida</span>
+          <span class="tag tg-muted">qa.passed → approval_pending</span>
+          <span class="tag tg-muted">qa.failed → idle</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-left">
+        <div class="flow-num" style="border-color:var(--yellow);color:var(--yellow)">appr</div>
+        <div class="flow-connector"></div>
+      </div>
+      <div class="flow-right">
+        <div class="flow-title">approval_pending — esperando decisión humana</div>
+        <div class="flow-desc">El HumanProxyAgent expone la decisión al operador. Si auto_approve=True, se salta este paso.</div>
+        <div class="flow-agents">
+          <span class="tag tg-yellow">HUMAN decide</span>
+          <span class="tag tg-muted">approve() → promoting</span>
+          <span class="tag tg-muted">reject() → idle</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-left">
+        <div class="flow-num" style="border-color:var(--orange);color:var(--orange)">prom</div>
+      </div>
+      <div class="flow-right">
+        <div class="flow-title">promoting — hot-swap del modelo</div>
+        <div class="flow-desc">Publica model.promoted → el MLE ejecuta POST /reload → publica model.reloaded → vuelta a idle.</div>
+        <div class="flow-agents">
+          <span class="tag tg-orange">MLE recarga</span>
+          <span class="tag tg-muted">model.reloaded → idle</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-code mt24">
+<span class="comment"># Transiciones de estado (en orchestrator_agent.py)</span>
+<span class="kw">if</span> topic == DRIFT_DETECTED  <span class="kw">and</span> state == <span class="str">"idle"</span>:       state = <span class="str">"retraining"</span>
+<span class="kw">if</span> topic == QA_PASSED       <span class="kw">and</span> state == <span class="str">"qa_pending"</span>:  state = <span class="str">"approval_pending"</span>
+<span class="kw">if</span> topic == QA_FAILED       <span class="kw">and</span> state == <span class="str">"qa_pending"</span>:  state = <span class="str">"idle"</span>
+<span class="kw">if</span> approve()               <span class="kw">and</span> state == <span class="str">"approval"</span>:   state = <span class="str">"promoting"</span>
+<span class="kw">if</span> topic == MODEL_RELOADED  <span class="kw">and</span> state == <span class="str">"promoting"</span>:  state = <span class="str">"idle"</span></div>
+</section>
+
+<!-- EJECUCIÓN -->
+<section class="section" id="ejecucion">
+  <div class="section-label">Parte 07</div>
+  <h2>Ejecución del Sistema</h2>
+  <p class="section-intro">
+    <code>runner.py</code> instancia los 6 agentes, los conecta al EventBus, y ejecuta
+    ciclos en el orden natural del pipeline.
+  </p>
+
+  <div class="flow-code" style="margin-bottom:20px">
+<span class="comment"># Ejecución con auto-approve (demo sin interacción)</span>
+python -m mlops_common.agents.runner --auto-approve --cycles 5
+
+<span class="comment"># Con aprobación manual (se detiene para input humano)</span>
+python -m mlops_common.agents.runner --cycles 3
+
+<span class="comment"># Dentro de Docker (conectado al stack real)</span>
+docker compose run --rm model-trainer \
+  python -m mlops_common.agents.runner \
+  --mlflow-uri http://mlflow:5001 \
+  --api-url http://inference-api:8000 \
+  --auto-approve</div>
+
+  <div class="concept">
+    <span class="concept-tag tg-green">Orden de ejecución por ciclo</span>
+    <h3>Cada ciclo ejecuta los agentes en el orden del pipeline</h3>
+    <p>
+      <code>MON → Orchestrator → DS → QA → Human → MLE</code><br><br>
+      Este orden refleja el flujo natural del sistema. El EventBus conecta la salida
+      de cada agente con la entrada del siguiente: MON publica <code>drift.detected</code>,
+      el Orchestrator lo recibe y publica <code>retrain.triggered</code>, DS entrena y
+      publica <code>model.trained</code>, etc.
+    </p>
+  </div>
+
+  <table class="gap-table mt16">
+    <thead><tr><th>Concepto de la sesión</th><th>Implementación en código</th><th>Archivo</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Roles → Agentes (MLOE, DS, MLE, QAE, MON)</td>
+        <td>Clases que heredan <code>AgentBase</code></td>
+        <td class="mono">*_agent.py</td>
+      </tr>
+      <tr>
+        <td>Matriz de interacción (Parte 04)</td>
+        <td><code>Topics</code> + <code>subscribe()</code>/<code>publish()</code></td>
+        <td class="mono">base.py, event_bus.py</td>
+      </tr>
+      <tr>
+        <td>Flujo de 10 pasos (Parte 05)</td>
+        <td>Máquina de estados en <code>OrchestratorAgent</code></td>
+        <td class="mono">orchestrator_agent.py</td>
+      </tr>
+      <tr>
+        <td>4 tipos de trigger (Parte 06)</td>
+        <td>Secuencial (EventBus), periódico (MonitoringAgent), event-driven (drift.detected), degradación (KS test)</td>
+        <td class="mono">monitoring_agent.py</td>
+      </tr>
+      <tr>
+        <td>Human-in-the-Loop (Parte 07)</td>
+        <td><code>HumanProxyAgent</code> con <code>approve()</code>/<code>reject()</code></td>
+        <td class="mono">human_proxy_agent.py</td>
+      </tr>
+      <tr>
+        <td>Automation Dilemma (§5.2.5)</td>
+        <td>Flag <code>auto_approve</code>: configurable por caso de uso</td>
+        <td class="mono">orchestrator_agent.py</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-yellow mt24">
+    <div class="callout-label">Extensiones posibles</div>
+    <strong>LLM para decisiones ambiguas:</strong> reemplazar el <code>decide()</code> del
+    <code>HumanProxyAgent</code> con una llamada a un LLM (Claude, GPT) que analice las
+    métricas y <em>sugiera</em> al humano aprobar o rechazar — sin tomar la decisión final.
+    Esto resuelve parcialmente el Automation Dilemma (§5.2.5) sin eliminar el control humano.
+  </div>
+</section>
+
+</div><!-- /page -->
+
+<footer>
+  Implementación de Arquitectura Agéntica MLOps<br>
+  Basado en: clase-multiagente-mlops.html (Clase 05)<br>
+  Framework: mlops_common/agents/ · Rule-based · observe → decide → act<br>
+  Stack: Docker Compose · MLflow · FastAPI · GitHub Actions (self-hosted)
+</footer>
+
+<script>
+const links = document.querySelectorAll('.nav-link');
+const sections = document.querySelectorAll('.section[id]');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
