@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitectura Agéntica Adaptativa — MLOps</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg:      #0a0e14;
+  --surf:    #111722;
+  --surf2:   #161e2c;
+  --border:  #1e2a3a;
+  --text:    #c9d1d9;
+  --muted:   #6e7681;
+  --dim:     #3d4a5c;
+
+  --blue:    #4a9eda;
+  --green:   #3dba6e;
+  --orange:  #f0a742;
+  --purple:  #b07fff;
+  --red:     #f06060;
+  --cyan:    #56d0e0;
+  --lime:    #c9e13a;
+  --yellow:  #ffd166;
+  --white:   #e6edf3;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,14,20,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex; align-items: center; gap: 0;
+  height: 48px; overflow-x: auto;
+}
+.nav-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700;
+  color: var(--blue); letter-spacing: 1px;
+  white-space: nowrap; margin-right: 24px; flex-shrink: 0;
+}
+.nav-link {
+  font-size: 11px; color: var(--muted);
+  text-decoration: none; padding: 0 14px;
+  height: 48px; display: flex; align-items: center;
+  white-space: nowrap; border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s; flex-shrink: 0;
+}
+.nav-link:hover { color: var(--white); border-bottom-color: var(--dim); }
+.nav-link.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* PAGE */
+.page { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* COVER */
+.cover {
+  padding: 64px 0 48px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 56px;
+}
+.cover-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--blue); margin-bottom: 16px;
+}
+.cover h1 {
+  font-size: 34px; font-weight: 700;
+  color: var(--white); line-height: 1.2;
+  letter-spacing: -.5px; margin-bottom: 16px;
+}
+.cover h1 span { color: var(--blue); }
+.cover-sub {
+  font-size: 15px; color: var(--muted);
+  max-width: 640px; margin-bottom: 28px; line-height: 1.7;
+}
+.cover-meta { display: flex; flex-wrap: wrap; gap: 10px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid;
+}
+.pill-blue   { color: var(--blue);   border-color: rgba(74,158,218,.35);  background: rgba(74,158,218,.08); }
+.pill-green  { color: var(--green);  border-color: rgba(61,186,110,.35);  background: rgba(61,186,110,.08); }
+.pill-orange { color: var(--orange); border-color: rgba(240,167,66,.35);  background: rgba(240,167,66,.08); }
+.pill-purple { color: var(--purple); border-color: rgba(176,127,255,.35); background: rgba(176,127,255,.08); }
+.pill-muted  { color: var(--muted);  border-color: var(--border);         background: var(--surf); }
+
+/* SECTIONS */
+.section { margin-bottom: 64px; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+.section h2 {
+  font-size: 22px; font-weight: 700;
+  color: var(--white); letter-spacing: -.3px;
+  margin-bottom: 6px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-intro {
+  margin: 16px 0 28px; color: var(--text);
+  font-size: 14px; line-height: 1.7;
+}
+
+/* TABLES */
+.data-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px; margin-bottom: 24px;
+}
+.data-table th {
+  text-align: left; padding: 8px 14px;
+  background: var(--surf2); color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text); vertical-align: top;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,.02); }
+.data-table td code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--cyan);
+  background: rgba(86,208,224,.07);
+  padding: 1px 6px; border-radius: 3px;
+}
+
+/* CARDS */
+.card {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+  margin-bottom: 16px;
+}
+.card-tag {
+  display: inline-block;
+  font-size: 9px; font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 3px 10px;
+  border-radius: 4px; margin-bottom: 12px;
+}
+.card h3 {
+  font-size: 16px; font-weight: 600;
+  color: var(--white); margin-bottom: 8px;
+}
+.card p { font-size: 13px; color: var(--text); line-height: 1.7; }
+.card-ref {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  color: var(--dim);
+}
+
+/* ARCH CARDS */
+.arch-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 32px; }
+.arch-card {
+  border-radius: 12px; border: 1px solid;
+  padding: 20px;
+}
+.arch-card .arch-letter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px; font-weight: 700; margin-bottom: 8px;
+}
+.arch-card h3 { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+.arch-card p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.ac-blue   { border-color: rgba(74,158,218,.4);  background: rgba(74,158,218,.04); }
+.ac-blue   .arch-letter { color: var(--blue); }
+.ac-orange { border-color: rgba(240,167,66,.4);  background: rgba(240,167,66,.04); }
+.ac-orange .arch-letter { color: var(--orange); }
+.ac-purple { border-color: rgba(176,127,255,.4); background: rgba(176,127,255,.04); }
+.ac-purple .arch-letter { color: var(--purple); }
+
+/* AGENT DETAIL CARDS */
+.agent-detail {
+  border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surf); margin-bottom: 14px; overflow: hidden;
+}
+.agent-detail-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.agent-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 1px; padding: 4px 10px;
+  border-radius: 6px;
+}
+.agent-detail-header h3 {
+  font-size: 15px; font-weight: 600; color: var(--white);
+}
+.agent-detail-header .file-path {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--dim); margin-top: 2px;
+}
+.agent-detail-body { padding: 18px 20px; }
+.agent-detail-body p { font-size: 13px; color: var(--text); line-height: 1.7; margin-bottom: 10px; }
+.threshold-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  background: var(--surf2); border-radius: 6px;
+  border: 1px solid var(--border); margin-bottom: 6px;
+  font-size: 12px;
+}
+.threshold-name { font-family: 'JetBrains Mono', monospace; color: var(--cyan); flex: 1; }
+.threshold-val  { font-family: 'JetBrains Mono', monospace; color: var(--orange); font-weight: 700; }
+.threshold-arrow { color: var(--dim); font-size: 10px; }
+.threshold-action { color: var(--muted); font-size: 11px; flex: 2; }
+.proposal-box {
+  margin-top: 14px; padding: 14px 16px;
+  border-radius: 8px; border-left: 3px solid var(--green);
+  background: rgba(61,186,110,.06);
+}
+.proposal-box .prop-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--green); margin-bottom: 8px;
+}
+.proposal-box p { font-size: 12px; color: var(--text); margin-bottom: 0; }
+.proposal-box code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--cyan);
+  background: rgba(86,208,224,.08); padding: 1px 5px; border-radius: 3px;
+}
+
+/* CODE BLOCK */
+pre {
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text);
+  overflow-x: auto; margin: 12px 0; line-height: 1.6;
+}
+pre .cm { color: var(--dim); font-style: italic; }
+pre .kw { color: var(--purple); }
+pre .fn { color: var(--blue); }
+pre .st { color: var(--green); }
+pre .nu { color: var(--orange); }
+pre .id { color: var(--cyan); }
+
+/* COMPARISON TABLE (stars) */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.comp-table th {
+  text-align: center; padding: 10px 14px;
+  background: var(--surf2); color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.comp-table th:first-child { text-align: left; }
+.comp-table td {
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  text-align: center; color: var(--text);
+}
+.comp-table td:first-child { text-align: left; font-size: 13px; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: rgba(255,255,255,.015); }
+.stars-high   { color: var(--green);  font-size: 15px; }
+.stars-mid    { color: var(--orange); font-size: 15px; }
+.stars-low    { color: var(--red);    font-size: 15px; }
+
+/* FLOW / PHASES */
+.phase-list { display: flex; flex-direction: column; gap: 12px; }
+.phase-item {
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.phase-num {
+  flex-shrink: 0; width: 32px; height: 32px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+}
+.phase-num-blue   { background: rgba(74,158,218,.15); color: var(--blue); border: 1px solid rgba(74,158,218,.3); }
+.phase-num-green  { background: rgba(61,186,110,.15); color: var(--green); border: 1px solid rgba(61,186,110,.3); }
+.phase-num-orange { background: rgba(240,167,66,.15); color: var(--orange); border: 1px solid rgba(240,167,66,.3); }
+.phase-content { padding-top: 4px; }
+.phase-content h4 { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+.phase-content p  { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.phase-connector {
+  width: 1px; height: 12px; background: var(--border);
+  margin-left: 16px;
+}
+
+/* TAG chips */
+.tag {
+  display: inline-block; font-size: 10px;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+}
+.tag-blue   { color: var(--blue);   background: rgba(74,158,218,.12); }
+.tag-green  { color: var(--green);  background: rgba(61,186,110,.12); }
+.tag-orange { color: var(--orange); background: rgba(240,167,66,.12); }
+.tag-purple { color: var(--purple); background: rgba(176,127,255,.12); }
+.tag-red    { color: var(--red);    background: rgba(240,96,96,.12); }
+.tag-cyan   { color: var(--cyan);   background: rgba(86,208,224,.12); }
+
+/* CALLOUT */
+.callout {
+  border-radius: 8px; padding: 16px 18px;
+  border-left: 3px solid; margin: 20px 0;
+  font-size: 13px; line-height: 1.7;
+}
+.callout-blue   { border-color: var(--blue);   background: rgba(74,158,218,.07);  color: var(--text); }
+.callout-green  { border-color: var(--green);  background: rgba(61,186,110,.07);  color: var(--text); }
+.callout-orange { border-color: var(--orange); background: rgba(240,167,66,.07);  color: var(--text); }
+.callout strong { color: var(--white); }
+
+/* GRID helpers */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mt-6 { margin-top: 6px; }
+.mt-12 { margin-top: 12px; }
+.mt-20 { margin-top: 20px; }
+.mb-20 { margin-bottom: 20px; }
+
+@media (max-width: 700px) {
+  .arch-grid { grid-template-columns: 1fr; }
+  .grid-2    { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">MLOPS · AGENTES ADAPTATIVOS</span>
+  <a href="#estado-actual"   class="nav-link active">Estado actual</a>
+  <a href="#arquitecturas"   class="nav-link">Arquitecturas</a>
+  <a href="#agentes"         class="nav-link">Agentes a modificar</a>
+  <a href="#entrenamiento"   class="nav-link">Entrenamiento</a>
+  <a href="#llm"             class="nav-link">LLM</a>
+  <a href="#comparacion"     class="nav-link">Comparación</a>
+  <a href="#roadmap"         class="nav-link">Roadmap</a>
+</nav>
+
+<div class="page">
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-eyebrow">PROPUESTA ARQUITECTÓNICA</div>
+  <h1>Agentes que <span>aprenden</span> de sus ejecuciones</h1>
+  <p class="cover-sub">
+    Evolución de la arquitectura multi-agente basada en reglas hacia un sistema adaptativo
+    que ajusta sus umbrales de decisión con la experiencia acumulada, monitoriza el desempeño
+    de cada modelo de decisión y evalúa cuándo incorporar razonamiento LLM.
+  </p>
+  <div class="cover-meta">
+    <span class="pill pill-blue">6 agentes analizados</span>
+    <span class="pill pill-orange">15 umbrales hardcoded</span>
+    <span class="pill pill-green">3 arquitecturas propuestas</span>
+    <span class="pill pill-purple">Comparación A / B / C</span>
+    <span class="pill pill-muted">mlops-stack/mlops_common/agents</span>
+  </div>
+</div>
+
+<!-- SECCIÓN 1: ESTADO ACTUAL -->
+<div class="section" id="estado-actual">
+  <div class="section-label">01 · DIAGNÓSTICO</div>
+  <h2>Estado actual: mapa de umbrales hardcoded</h2>
+  <p class="section-intro">
+    La arquitectura implementa 6 agentes con ciclo ODA (observe → decide → act) conectados
+    por un EventBus pub/sub. El problema central: <strong style="color:var(--white)">ningún umbral
+    se ajusta con la experiencia</strong>. Si el modelo produce tres falsas alarmas de drift seguidas,
+    el contador de ventanas consecutivas sigue siendo 2. Si el mercado cambia estacionalmente,
+    los quality gates permanecen rígidos.
+  </p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Agente</th>
+        <th>Variable / umbral</th>
+        <th>Valor fijo</th>
+        <th>Tipo de decisión</th>
+        <th>Archivo · línea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tag tag-blue">MON</span> MonitoringAgent</td>
+        <td><code>drift_threshold</code> (ventanas consecutivas)</td>
+        <td><code>2</code></td>
+        <td>Trigger de reentrenamiento</td>
+        <td><code>monitoring_agent.py:37,112</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-blue">MON</span> MonitoringAgent</td>
+        <td><code>data_drift_p_value</code></td>
+        <td><code>0.05</code></td>
+        <td>Clasificar feature como drifted</td>
+        <td><code>config.py:71</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">PERF</span> PerformanceDrift</td>
+        <td><code>effect_size_threshold</code></td>
+        <td><code>0.05</code></td>
+        <td>Drift por magnitud de cambio</td>
+        <td><code>performance_drift_detector.py:40,127</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">PERF</span> PerformanceDrift</td>
+        <td><code>p_value_threshold</code> (t-test)</td>
+        <td><code>0.05</code></td>
+        <td>Drift por significancia estadística</td>
+        <td><code>performance_drift_detector.py:39,141</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">PERF</span> PerformanceDrift</td>
+        <td><code>ewma_alpha</code></td>
+        <td><code>0.3</code></td>
+        <td>Suavizado de tendencia (EWMA)</td>
+        <td><code>performance_drift_detector.py:41,151</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">PERF</span> PerformanceDrift</td>
+        <td>EWMA divergence threshold</td>
+        <td><code>0.07</code></td>
+        <td>Drift por tendencia acumulada</td>
+        <td><code>performance_drift_detector.py:156</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">PERF</span> PerformanceDrift</td>
+        <td>min history para t-test</td>
+        <td><code>5</code></td>
+        <td>Condición de activación del test</td>
+        <td><code>performance_drift_detector.py:135</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">PERF</span> PerformanceDrift</td>
+        <td>overall drift threshold (métricas)</td>
+        <td><code>2</code></td>
+        <td>Drift si ≥ 2 métricas individuales driftan</td>
+        <td><code>performance_drift_detector.py:170</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">QAE</span> QAAgent</td>
+        <td><code>min_accuracy</code> / <code>min_f1</code></td>
+        <td><code>0.90 / 0.90</code></td>
+        <td>Gate de promoción de modelo</td>
+        <td><code>iris-classifier.yaml:28-29</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">QAE</span> QAAgent</td>
+        <td><code>min_per_class_recall</code></td>
+        <td><code>0.80</code></td>
+        <td>Gate de recall por clase</td>
+        <td><code>iris-classifier.yaml:30</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">QAE</span> QAAgent</td>
+        <td><code>max_cv_std</code></td>
+        <td><code>0.05</code></td>
+        <td>Gate de estabilidad cross-validation</td>
+        <td><code>iris-classifier.yaml:31</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-cyan">RET</span> RetainTrigger</td>
+        <td><code>challenger_min_improvement</code></td>
+        <td><code>0.01</code></td>
+        <td>Decisión champion/challenger</td>
+        <td><code>retrain_trigger.py:24,147</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">QAE</span> QAAgent</td>
+        <td><code>min_r2</code> (regresión)</td>
+        <td><code>0.70</code></td>
+        <td>Gate de calidad (caso regresión)</td>
+        <td><code>custom-regressor-dvc.yaml:65</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">QAE</span> QAAgent</td>
+        <td><code>max_mae</code> (regresión)</td>
+        <td><code>60000.0</code></td>
+        <td>Gate de error máximo aceptable</td>
+        <td><code>custom-regressor-dvc.yaml:66</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-blue">MON</span> DataScientist</td>
+        <td><code>test_size</code> / <code>cv_folds</code></td>
+        <td><code>0.25 / 5</code></td>
+        <td>Partición de datos y validación</td>
+        <td><code>iris-classifier.yaml:19,21</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-orange">
+    <strong>Problema estructural:</strong> ninguno de estos 15 umbrales tiene un mecanismo de
+    retroalimentación. El sistema no registra si una alarma de drift derivó en una mejora real
+    del modelo, ni si un quality gate rechazó un challenger que luego habría sido beneficioso.
+    Sin ese historial, no hay base para aprender.
+  </div>
+</div>
+
+<!-- SECCIÓN 2: TRES ARQUITECTURAS -->
+<div class="section" id="arquitecturas">
+  <div class="section-label">02 · PROPUESTA</div>
+  <h2>Tres arquitecturas en escala de complejidad</h2>
+  <p class="section-intro">
+    La propuesta no es un salto binario a LLMs. Es una escala gradual con trade-offs concretos
+    en costo, determinismo y sostenibilidad. La recomendación es llegar a <strong style="color:var(--white)">B</strong>
+    transitando por <strong style="color:var(--white)">A</strong>: los datos de A son los que hacen útil al LLM en B.
+  </p>
+
+  <div class="arch-grid">
+    <div class="arch-card ac-blue">
+      <div class="arch-letter">A</div>
+      <h3>Reglas + aprendizaje de umbrales</h3>
+      <p>Mantiene ODA cycle y EventBus. Añade un ThresholdOptimizer que aprende de la historia para ajustar umbrales dinámicamente. Sin LLM. Bandit algorithms + regresión logística online + Bayesian optimization.</p>
+    </div>
+    <div class="arch-card ac-orange">
+      <div class="arch-letter">B</div>
+      <h3>Híbrida: reglas + LLM para meta-decisiones</h3>
+      <p>Agentes de ejecución siguen siendo rule-based. Un LLM Meta-Agent razona sobre situaciones ambiguas, escalaciones y calibración de umbrales. Claude Haiku 4.5 por costo/latencia.</p>
+    </div>
+    <div class="arch-card ac-purple">
+      <div class="arch-letter">C</div>
+      <h3>LLM-based total</h3>
+      <p>Cada agente tiene un LLM como cerebro de decisión. Las herramientas (MLflow API, KS test, reload endpoint) se exponen como tool calls. Aprendizaje vía RAG sobre ExperienceStore.</p>
+    </div>
+  </div>
+
+  <!-- Componente compartido -->
+  <div class="card" style="border-color: rgba(86,208,224,.3); background: rgba(86,208,224,.04);">
+    <div class="card-tag" style="color:var(--cyan); background:rgba(86,208,224,.12);">COMPONENTE COMPARTIDO · A + B + C</div>
+    <h3>ExperienceStore — base de todo aprendizaje</h3>
+    <p>Tabla SQLite (o parquet en MLflow artifacts) donde todos los agentes registran sus decisiones
+    y el outcome posterior. Es el prerequisito para cualquier aprendizaje adaptativo.</p>
+    <pre><span class="cm"># Schema mínimo del ExperienceStore</span>
+{
+  <span class="st">"cycle_id"</span>:          str,   <span class="cm"># ID único del ciclo ODA</span>
+  <span class="st">"agent"</span>:             str,   <span class="cm"># "MonitoringAgent", "QAAgent", etc.</span>
+  <span class="st">"decision"</span>:          str,   <span class="cm"># "trigger_retrain", "pass", "fail"</span>
+  <span class="st">"threshold_used"</span>:    float, <span class="cm"># valor del umbral en ese ciclo</span>
+  <span class="st">"context_features"</span>:  dict,  <span class="cm"># métricas observadas (KS stats, p-vals, etc.)</span>
+  <span class="st">"outcome"</span>:           str,   <span class="cm"># "beneficial" | "wasted" | "missed"</span>
+  <span class="st">"outcome_delay"</span>:     int    <span class="cm"># ciclos hasta conocer el outcome</span>
+}</pre>
+    <div class="card-ref">Implementar en: <span style="color:var(--cyan)">mlops_common/experience_store.py</span> — todos los agentes llaman <code>store.record()</code> al final de <code>act()</code></div>
+  </div>
+</div>
+
+<!-- SECCIÓN 3: AGENTES A MODIFICAR -->
+<div class="section" id="agentes">
+  <div class="section-label">03 · MODIFICACIONES</div>
+  <h2>Agentes a modificar y cómo</h2>
+  <p class="section-intro">
+    Cuatro agentes reciben modificaciones sustanciales en la Arquitectura A.
+    Los otros dos (MLEngineerAgent, OrchestratorAgent) solo añaden el call a <code>store.record()</code>.
+  </p>
+
+  <!-- MonitoringAgent -->
+  <div class="agent-detail">
+    <div class="agent-detail-header">
+      <span class="agent-badge" style="color:var(--blue); background:rgba(74,158,218,.12);">MON</span>
+      <div>
+        <h3>MonitoringAgent</h3>
+        <div class="file-path">mlops_common/agents/monitoring_agent.py</div>
+      </div>
+      <span class="tag tag-blue" style="margin-left:auto">Arquitectura A + B</span>
+    </div>
+    <div class="agent-detail-body">
+      <p>Actualmente usa <code>drift_threshold=2</code> (ventanas consecutivas) fijo. Si hay 2 falsas alarmas seguidas, el sistema se reentrena innecesariamente. No hay registro de cuántas veces el reentrenamiento fue beneficioso.</p>
+
+      <div class="threshold-row">
+        <span class="threshold-name">drift_threshold</span>
+        <span class="threshold-val">= 2</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">Si consecutive_drift ≥ 2: trigger_retrain</span>
+      </div>
+      <div class="threshold-row">
+        <span class="threshold-name">data_drift_p_value</span>
+        <span class="threshold-val">= 0.05</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">Si pval &lt; 0.05: feature drifted</span>
+      </div>
+
+      <div class="proposal-box">
+        <div class="prop-label">Propuesta — Thompson Sampling sobre drift_threshold</div>
+        <p>Cada valor candidato de <code>drift_threshold</code> (1, 2, 3, 4) tiene una distribución Beta(α, β).
+        Tras cada ciclo completo, si el reentrenamiento fue beneficioso: α += 1 (éxito) para el threshold usado.
+        Si fue desperdiciado: β += 1 (fracaso). El agente samplea el threshold con mayor expected value antes de cada ciclo.
+        No requiere GPU — es actualización analítica de distribuciones Beta.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- QAAgent -->
+  <div class="agent-detail">
+    <div class="agent-detail-header">
+      <span class="agent-badge" style="color:var(--green); background:rgba(61,186,110,.12);">QAE</span>
+      <div>
+        <h3>QAAgent</h3>
+        <div class="file-path">mlops_common/agents/qa_agent.py</div>
+      </div>
+      <span class="tag tag-blue" style="margin-left:auto">Arquitectura A</span>
+    </div>
+    <div class="agent-detail-body">
+      <p>Los quality gates son comparaciones estáticas contra valores YAML. No hay mecanismo para detectar si el gate está siendo demasiado restrictivo (rechazando challengers que habrían mejorado producción) o demasiado laxo (aprobando modelos que luego degradan).</p>
+
+      <div class="threshold-row">
+        <span class="threshold-name">min_accuracy</span>
+        <span class="threshold-val">≥ 0.90</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">QA pass si accuracy ≥ umbral</span>
+      </div>
+      <div class="threshold-row">
+        <span class="threshold-name">min_f1</span>
+        <span class="threshold-val">≥ 0.90</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">QA pass si F1 ≥ umbral</span>
+      </div>
+      <div class="threshold-row">
+        <span class="threshold-name">min_per_class_recall</span>
+        <span class="threshold-val">≥ 0.80</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">QA pass si recall/clase ≥ umbral</span>
+      </div>
+
+      <div class="proposal-box">
+        <div class="prop-label">Propuesta — QACalibrator con SGDClassifier.partial_fit()</div>
+        <p>En lugar de comparar contra un umbral fijo, el agente entrena un <code>SGDClassifier</code> (regresión logística online)
+        que predice P(modelo_en_prod_exitoso | metric_value). El "threshold" se convierte en el percentil de la
+        distribución histórica que maximiza el F1 del gate (balancear falsos rechazos vs. falsas aprobaciones).
+        Reentrenamiento incremental con <code>partial_fit()</code> tras cada ciclo completo.
+        Modelo &lt;1KB de parámetros, totalmente interpretable.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PerformanceDriftDetector -->
+  <div class="agent-detail">
+    <div class="agent-detail-header">
+      <span class="agent-badge" style="color:var(--orange); background:rgba(240,167,66,.12);">PERF</span>
+      <div>
+        <h3>PerformanceDriftDetector</h3>
+        <div class="file-path">drift-detector/performance_drift_detector.py</div>
+      </div>
+      <span class="tag tag-blue" style="margin-left:auto">Arquitectura A</span>
+    </div>
+    <div class="agent-detail-body">
+      <p>Tiene 5 umbrales que interactúan entre sí: p-value, effect_size, ewma_alpha, ewma_divergence, y min_samples. Optimizarlos manualmente es inviable porque el espacio de combinaciones es continuo y multidimensional.</p>
+
+      <div class="threshold-row">
+        <span class="threshold-name">effect_size_threshold</span>
+        <span class="threshold-val">0.05</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">|current - baseline| &gt; threshold</span>
+      </div>
+      <div class="threshold-row">
+        <span class="threshold-name">p_value_threshold</span>
+        <span class="threshold-val">0.05</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">t-test p &lt; threshold AND abs_change &gt; 0.02</span>
+      </div>
+      <div class="threshold-row">
+        <span class="threshold-name">ewma_alpha</span>
+        <span class="threshold-val">0.3</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">peso del MA exponencial</span>
+      </div>
+      <div class="threshold-row">
+        <span class="threshold-name">EWMA divergence</span>
+        <span class="threshold-val">0.07</span>
+        <span class="threshold-arrow">→</span>
+        <span class="threshold-action">ewma_change &gt; threshold → drift</span>
+      </div>
+
+      <div class="proposal-box">
+        <div class="prop-label">Propuesta — Optuna Bayesian Optimization (script semanal offline)</div>
+        <p>Un script offline corre <code>optuna.create_study()</code> sobre el historial del ExperienceStore.
+        Objective: F1 del detector (precision × recall de alarmas reales vs. falsas) sobre ventanas etiquetadas.
+        Cada semana, Optuna explora el espacio de los 5 umbrales con ~50 trials y escribe el resultado al YAML de config.
+        El detector recarga los valores en el siguiente restart. Sin cambiar el código del detector — solo se actualiza la config.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DataScientistAgent -->
+  <div class="agent-detail">
+    <div class="agent-detail-header">
+      <span class="agent-badge" style="color:var(--purple); background:rgba(176,127,255,.12);">DS</span>
+      <div>
+        <h3>DataScientistAgent + ModelSelector</h3>
+        <div class="file-path">mlops_common/agents/data_scientist_agent.py</div>
+      </div>
+      <span class="tag tag-orange" style="margin-left:auto">Arquitectura B</span>
+    </div>
+    <div class="agent-detail-body">
+      <p>Actualmente usa <code>cfg.model.family</code> fijo (random_forest_classifier). No considera el tipo de drift detectado, la magnitud del cambio de distribución ni las características del nuevo batch de datos para elegir familia de modelo o hiperparámetros.</p>
+
+      <div class="proposal-box">
+        <div class="prop-label">Propuesta — ModelSelectorAgent con RAG sobre ExperienceStore (Arquitectura B)</div>
+        <p>Un wrapper del DataScientistAgent consulta al LLM (Claude Haiku 4.5) con few-shots extraídos del ExperienceStore:
+        "dado que driftearon estas features con esta magnitud, y el último retrain con RandomForest tuvo accuracy X,
+        ¿qué familia de modelo y hiperparámetros recomiendas?". Los few-shots son los 5 ejemplos más similares
+        recuperados por embeddings de contexto. El LLM devuelve JSON estructurado con <code>model_family</code>
+        y <code>params</code>. El DataScientistAgent usa esa sugerencia o su default si el LLM falla.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agentes NO modificados -->
+  <div class="callout callout-green">
+    <strong>Agentes sin cambios sustanciales:</strong> OrchestratorAgent, MLEngineerAgent y HumanProxyAgent
+    solo añaden el call a <code>store.record()</code> al final de <code>act()</code>. Su lógica de decisión
+    es correcta y no depende de umbrales calibrables. En Arquitectura B, el OrchestratorAgent
+    se reemplaza por un MetaOrchestratorAgent que usa LLM para situaciones ambiguas.
+  </div>
+</div>
+
+<!-- SECCIÓN 4: PROCESOS DE ENTRENAMIENTO -->
+<div class="section" id="entrenamiento">
+  <div class="section-label">04 · APRENDIZAJE</div>
+  <h2>Procesos de entrenamiento por componente</h2>
+  <p class="section-intro">
+    Cada componente adaptativo usa un método distinto, apropiado a la naturaleza de su
+    problema de optimización y al volumen de datos disponible.
+  </p>
+
+  <div class="grid-2">
+    <div class="card" style="border-color:rgba(74,158,218,.3)">
+      <div class="card-tag" style="color:var(--blue);background:rgba(74,158,218,.12)">BANDIT · ONLINE</div>
+      <h3>ThresholdOptimizer — MonitoringAgent</h3>
+      <p><strong style="color:var(--white)">Algoritmo:</strong> Thompson Sampling sobre distribuciones Beta(α, β) por cada valor candidato de umbral.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Cuándo:</strong> al final de cada ciclo completo del runner, tras conocer el outcome del reentrenamiento.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Datos:</strong> historial del ExperienceStore — no requiere batch mínimo, funciona desde el primer registro.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Costo:</strong> actualización analítica, microsegundos. Sin GPU. Sin dependencias externas.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Monitoreo:</strong> loguear α/(α+β) por umbral a MLflow experiment <code>threshold-optimization</code>.</p>
+    </div>
+    <div class="card" style="border-color:rgba(61,186,110,.3)">
+      <div class="card-tag" style="color:var(--green);background:rgba(61,186,110,.12)">LOGISTIC REGRESSION · INCREMENTAL</div>
+      <h3>QACalibrator — QAAgent</h3>
+      <p><strong style="color:var(--white)">Algoritmo:</strong> <code>sklearn.SGDClassifier</code> con <code>partial_fit()</code> — regresión logística online, interpretable.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Cuándo:</strong> cada N ciclos completos (N=10 sugerido). Requiere al menos 20 ejemplos etiquetados.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Features:</strong> (metric_value, gate_name, model_family, dataset_size) → label: prod_success.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Costo:</strong> CPU, segundos. Modelo &lt;1KB. Persistido en disco entre reinicios.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Monitoreo:</strong> F1 del calibrador logueado a MLflow experiment <code>qa-calibration</code>.</p>
+    </div>
+    <div class="card" style="border-color:rgba(240,167,66,.3)">
+      <div class="card-tag" style="color:var(--orange);background:rgba(240,167,66,.12)">BAYESIAN OPTIMIZATION · OFFLINE SEMANAL</div>
+      <h3>DriftHyperOptimizer — PerformanceDriftDetector</h3>
+      <p><strong style="color:var(--white)">Algoritmo:</strong> Optuna TPE sampler sobre 5 hiperparámetros continuos del detector.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Cuándo:</strong> script semanal offline (cron job GitHub Actions). No bloquea el pipeline principal.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Objective:</strong> F1(detector) = harmonic mean de precision y recall de alarmas reales vs. falsas sobre historial etiquetado.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Costo:</strong> ~50 trials × evaluación sobre historial. CPU, ~5-30 min semanales.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Salida:</strong> escribe valores optimizados al YAML de config. El detector los recarga en el siguiente restart.</p>
+    </div>
+    <div class="card" style="border-color:rgba(176,127,255,.3)">
+      <div class="card-tag" style="color:var(--purple);background:rgba(176,127,255,.12)">GRADIENT BOOSTING · BATCH PERIÓDICO</div>
+      <h3>RetainDecisionModel — RetainTrigger</h3>
+      <p><strong style="color:var(--white)">Algoritmo:</strong> XGBoost — predice si promover el challenger dado el contexto del retrain.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Features:</strong> (drift_magnitude, features_drifted, dataset_size, days_since_last_retrain, challenger_delta).</p>
+      <p class="mt-6"><strong style="color:var(--white)">Label:</strong> <code>promoted_was_beneficial</code> — determinado a posteriori por degradación o mejora en producción.</p>
+      <p class="mt-6"><strong style="color:var(--white)">Cuándo:</strong> reentrenar cuando acumulen ≥50 eventos de retrain etiquetados (~mensual inicialmente).</p>
+      <p class="mt-6"><strong style="color:var(--white)">Costo:</strong> CPU, minutos. El modelo reemplaza a <code>MIN_DELTA</code> como criterio de decisión.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-blue">
+    <strong>Feedback demorado — el reto principal:</strong> en todos los casos, el outcome de una decisión
+    (¿fue beneficioso el reentrenamiento?) se conoce varios ciclos después de la decisión.
+    El ExperienceStore debe guardar el <code>cycle_id</code> para poder hacer join entre
+    decisión y outcome cuando este arrive. Los componentes de aprendizaje deben tolerar
+    este delay y no actualizar sus parámetros hasta tener el outcome completo.
+  </div>
+</div>
+
+<!-- SECCIÓN 5: LLM -->
+<div class="section" id="llm">
+  <div class="section-label">05 · LLM-BASED AGENTS</div>
+  <h2>¿Cuándo y cómo incorporar un LLM?</h2>
+  <p class="section-intro">
+    No todos los agentes se benefician igual de un LLM. El criterio es: ¿el problema
+    requiere razonamiento sobre contexto abierto o simplemente optimizar un parámetro continuo?
+    Los umbrales estadísticos son optimización — el LLM no añade valor. Las meta-decisiones
+    sobre escalación y selección de estrategia son razonamiento — el LLM sí añade valor.
+  </p>
+
+  <table class="data-table mb-20">
+    <thead>
+      <tr>
+        <th>Agente</th>
+        <th>¿Mover a LLM?</th>
+        <th>Justificación</th>
+        <th>Modelo sugerido</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tag tag-blue">MON</span> MonitoringAgent</td>
+        <td><span class="tag tag-red">NO</span></td>
+        <td>El problema es optimizar un umbral continuo. Bandit/Bayesian es más eficiente y determinista que un LLM para eso.</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">PERF</span> PerformanceDrift</td>
+        <td><span class="tag tag-red">NO</span></td>
+        <td>Multidimensional pero numérico — Optuna es la herramienta correcta. El LLM no puede optimizar sobre 5 dimensiones continuas.</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">QAE</span> QAAgent</td>
+        <td><span class="tag tag-red">NO</span></td>
+        <td>Calibración de umbrales de gates — regresión logística es suficiente y totalmente interpretable.</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-cyan">MLOE</span> OrchestratorAgent</td>
+        <td><span class="tag tag-orange">PARCIAL (Arq. B)</span></td>
+        <td>La state machine cubre el 90% de los casos. El LLM interviene en escalaciones ambiguas: múltiples drifts simultáneos, fallas de QA con métricas borderline, contexto histórico inusual.</td>
+        <td>Claude Haiku 4.5</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-purple">DS</span> DataScientistAgent</td>
+        <td><span class="tag tag-orange">PARCIAL (Arq. B)</span></td>
+        <td>El wrapper ModelSelector usa LLM para recomendar familia de modelo e hiperparámetros iniciales dado el contexto. El entrenamiento sigue siendo determinista.</td>
+        <td>Claude Haiku 4.5</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-yellow">HPA</span> HumanProxyAgent</td>
+        <td><span class="tag tag-green">SÍ (Arq. B)</span></td>
+        <td>En modo auto, el LLM puede simular la política de aprobación humana aprendida de interacciones pasadas. Reduce intervención manual en casos rutinarios.</td>
+        <td>Claude Haiku 4.5</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card" style="border-color:rgba(240,167,66,.3); background:rgba(240,167,66,.04)">
+    <div class="card-tag" style="color:var(--orange);background:rgba(240,167,66,.12)">ARQUITECTURA B · DETALLE</div>
+    <h3>MetaOrchestratorAgent — LLM como árbitro de incertidumbre</h3>
+    <p>El OrchestratorAgent mantiene su state machine para el 90% de los casos. Cuando la confianza
+    del ThresholdOptimizer es baja (alta varianza en la distribución Beta del bandit) o cuando
+    llegan múltiples eventos de drift simultáneos, el MetaOrchestratorAgent consulta al LLM:</p>
+    <pre>contexto = {
+  <span class="st">"drift_report"</span>:        drift_features_y_magnitudes,
+  <span class="st">"threshold_confidence"</span>: bandit.get_confidence(),   <span class="cm"># α/(α+β) variance</span>
+  <span class="st">"model_metrics"</span>:       metricas_production_actuales,
+  <span class="st">"recent_history"</span>:      experience_store.last_n(5),  <span class="cm"># RAG</span>
+  <span class="st">"state"</span>:               orchestrator.state
+}
+decision = claude_haiku.invoke(
+    system=<span class="st">"Eres un MLOps engineer supervisando una pipeline..."</span>,
+    messages=[build_decision_prompt(contexto)],
+    tools=[tool_trigger_retrain, tool_request_human, tool_noop]
+)</pre>
+    <div class="card-ref">El LLM devuelve una tool call estructurada — no texto libre. El agente ejecuta la tool y registra el reasoning en el ExperienceStore para futuros few-shots.</div>
+  </div>
+</div>
+
+<!-- SECCIÓN 6: COMPARACIÓN -->
+<div class="section" id="comparacion">
+  <div class="section-label">06 · ANÁLISIS COMPARATIVO</div>
+  <h2>Comparación de arquitecturas</h2>
+
+  <!-- Tabla comparativa visual -->
+  <table class="comp-table" style="margin-bottom:32px">
+    <thead>
+      <tr>
+        <th style="width:30%">Criterio</th>
+        <th>A · Reglas + ML</th>
+        <th>B · Híbrida</th>
+        <th>C · LLM total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Flexibilidad de diseño</strong></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Flexibilidad de ejecución</strong></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Costo computacional (runtime)</strong></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-low">★</span><span style="color:var(--dim)">★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Costo computacional (desarrollo)</strong></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Sostenibilidad ambiental (runtime)</strong></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Sostenibilidad ambiental (desarrollo)</strong></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Determinismo / auditabilidad</strong></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-low">★</span><span style="color:var(--dim)">★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Tolerancia a fallos</strong></td>
+        <td><span class="stars-high">★★★</span></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-low">★</span><span style="color:var(--dim)">★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Velocidad de iteración</strong></td>
+        <td><span class="stars-low">★</span><span style="color:var(--dim)">★★</span></td>
+        <td><span class="stars-mid">★★</span><span style="color:var(--dim)">★</span></td>
+        <td><span class="stars-high">★★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>Latencia por ciclo ODA</strong></td>
+        <td>~10–50 ms</td>
+        <td>~1–3 s (LLM calls)</td>
+        <td>~5–15 s (N LLM calls)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Análisis dimensional -->
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom:14px; border-color:rgba(74,158,218,.25)">
+        <div class="card-tag" style="color:var(--blue);background:rgba(74,158,218,.1)">FLEXIBILIDAD DE DISEÑO</div>
+        <h3>C gana, A es la más rígida</h3>
+        <p>Añadir una nueva señal de drift en A requiere código nuevo + tiempo para acumular datos de entrenamiento del calibrador.
+        En B basta actualizar el prompt y los few-shots. En C solo se describe la señal en el system prompt.
+        Sin embargo, A tiene la ventaja de ser completamente <strong style="color:var(--white)">predecible en diseño</strong>:
+        el comportamiento del sistema es auditable línea por línea.</p>
+      </div>
+      <div class="card" style="border-color:rgba(61,186,110,.25)">
+        <div class="card-tag" style="color:var(--green);background:rgba(61,186,110,.1)">FLEXIBILIDAD DE EJECUCIÓN</div>
+        <h3>B y C se adaptan en tiempo real</h3>
+        <p>A adapta sus umbrales de forma online pero lenta (N ciclos). B y C pueden razonar sobre
+        una situación nueva inmediatamente, sin esperar a acumular datos. La contrapartida: en C,
+        <strong style="color:var(--white)">el determinismo se pierde</strong> — el mismo contexto puede
+        producir decisiones distintas entre runs, lo que complica debugging y auditoría.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px; border-color:rgba(240,167,66,.25)">
+        <div class="card-tag" style="color:var(--orange);background:rgba(240,167,66,.1)">COSTO COMPUTACIONAL</div>
+        <h3>A es drásticamente más barata en runtime</h3>
+        <p>A ciclo cada 2 segundos (default del runner): A cuesta ~0 en API, B ~$0.0001–0.001 por ciclo
+        (~$0.14–1.44/mes a 1 ciclo/min), C ~$0.001–0.01 (~$1.44–14.4/mes).
+        En desarrollo, la situación se invierte: A requiere implementar y mantener 4 pipelines de entrenamiento ML;
+        B y C son principalmente prompting. A mayor escala de modelos gestionados, la ventaja de A en runtime
+        crece linealmente.</p>
+      </div>
+      <div class="card" style="border-color:rgba(86,208,224,.25)">
+        <div class="card-tag" style="color:var(--cyan);background:rgba(86,208,224,.1)">SOSTENIBILIDAD AMBIENTAL</div>
+        <h3>Paradoja: B/C pueden ser más verdes en desarrollo</h3>
+        <p>A runtime, A es la más eficiente si el host usa energía renovable. Pero el
+        <strong style="color:var(--white)">desarrollo de A</strong> requiere ciclos computacionales semanales
+        (Optuna, reentrenamiento XGBoost, evaluación de calibradores). B y C eliminan esos ciclos.
+        Los datacenters de Anthropic operan con ~100% energía renovable, por lo que el trade-off
+        real depende de la fuente eléctrica del host de A.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Costo estimado tabla -->
+  <div class="mt-20">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Métrica</th>
+          <th>A · Reglas + ML</th>
+          <th>B · Híbrida</th>
+          <th>C · LLM total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CPU por ciclo</td>
+          <td>~10 ms (reglas) + ~50 ms (sklearn)</td>
+          <td>~10 ms + ~1–3 s (LLM API call)</td>
+          <td>~5–15 s (múltiples LLM calls)</td>
+        </tr>
+        <tr>
+          <td>GPU requerida</td>
+          <td>Ninguna</td>
+          <td>Ninguna (API externa)</td>
+          <td>Ninguna (API externa)</td>
+        </tr>
+        <tr>
+          <td>Costo API estimado por ciclo</td>
+          <td>$0</td>
+          <td>~$0.0001–0.001</td>
+          <td>~$0.001–0.01</td>
+        </tr>
+        <tr>
+          <td>Costo API mensual (1 ciclo/min)</td>
+          <td>$0</td>
+          <td>~$0.14–1.44</td>
+          <td>~$1.44–14.4</td>
+        </tr>
+        <tr>
+          <td>Costo de desarrollo inicial</td>
+          <td>Alto (4 pipelines ML)</td>
+          <td>Medio (LLM + RAG + pipelines)</td>
+          <td>Bajo (prompting + RAG)</td>
+        </tr>
+        <tr>
+          <td>Costo de mantenimiento</td>
+          <td>Alto (monitorear 4 modelos de decisión)</td>
+          <td>Medio</td>
+          <td>Bajo (actualizar prompts)</td>
+        </tr>
+        <tr>
+          <td>Energía semanal de entrenamiento</td>
+          <td>~0.5–2 kWh (Optuna + XGBoost)</td>
+          <td>~0.1 kWh (solo ExperienceStore ETL)</td>
+          <td>~0 (no hay entrenamiento)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SECCIÓN 7: ROADMAP -->
+<div class="section" id="roadmap">
+  <div class="section-label">07 · IMPLEMENTACIÓN</div>
+  <h2>Roadmap recomendado</h2>
+  <p class="section-intro">
+    La secuencia importa: los datos del ExperienceStore son el prerequisito para que
+    el LLM en B sea útil. Sin historial, el meta-agent improvisa sobre contexto vacío.
+  </p>
+
+  <div class="phase-list">
+    <div class="phase-item">
+      <div class="phase-num phase-num-blue">1</div>
+      <div class="phase-content">
+        <h4>ExperienceStore — prerequisito de todo lo demás</h4>
+        <p>Nuevo módulo <code>mlops_common/experience_store.py</code>. Tabla SQLite con schema fijo.
+        Modificar los 6 agentes para llamar <code>store.record()</code> al final de <code>act()</code>.
+        Añadir lógica de resolución de outcome diferido (join por <code>cycle_id</code> cuando llega el feedback).
+        Duración estimada: 1–2 días.</p>
+      </div>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-item">
+      <div class="phase-num phase-num-blue">2</div>
+      <div class="phase-content">
+        <h4>ThresholdOptimizer — MonitoringAgent (Bandit)</h4>
+        <p>Módulo <code>mlops_common/threshold_optimizer.py</code>. Thompson Sampling sobre <code>drift_threshold</code>.
+        Integrar al final del ciclo en <code>runner.py</code>. Loguear distribuciones Beta a MLflow.
+        Duración estimada: 1 día.</p>
+      </div>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-item">
+      <div class="phase-num phase-num-blue">3</div>
+      <div class="phase-content">
+        <h4>QACalibrator — QAAgent (regresión logística online)</h4>
+        <p>Modificar <code>qa_agent.py</code> para usar percentiles calibrados en lugar de umbrales YAML fijos.
+        <code>SGDClassifier.partial_fit()</code> cada N=10 ciclos. Persistir modelo calibrador en disco.
+        Duración estimada: 1–2 días.</p>
+      </div>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-item">
+      <div class="phase-num phase-num-blue">4</div>
+      <div class="phase-content">
+        <h4>DriftHyperOptimizer — script semanal offline (Optuna)</h4>
+        <p>Script independiente <code>scripts/optimize_drift_thresholds.py</code>. Cron job en <code>.github/workflows/</code>.
+        Lee ExperienceStore, corre 50 trials de Optuna, escribe al YAML de config.
+        El PerformanceDriftDetector no se modifica — solo recarga config en el siguiente restart.
+        Duración estimada: 1 día.</p>
+      </div>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-item">
+      <div class="phase-num phase-num-green">5</div>
+      <div class="phase-content">
+        <h4>[Arquitectura B] MetaOrchestratorAgent — LLM para escalaciones ambiguas</h4>
+        <p>Una vez que el ExperienceStore tiene ≥100 registros etiquetados (~2–4 semanas de operación):
+        implementar el MetaOrchestratorAgent con Claude Haiku 4.5, RAG sobre ExperienceStore,
+        y fallback a la state machine original si el LLM falla o el timeout se supera.
+        Duración estimada: 2–3 días.</p>
+      </div>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-item">
+      <div class="phase-num phase-num-green">6</div>
+      <div class="phase-content">
+        <h4>[Arquitectura B] ModelSelectorAgent — LLM para selección de modelo</h4>
+        <p>Wrapper del DataScientistAgent con few-shots por similaridad de contexto.
+        El LLM recomienda familia de modelo e hiperparámetros iniciales. Fallback a config por defecto.
+        Duración estimada: 1–2 días.</p>
+      </div>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-item">
+      <div class="phase-num phase-num-orange">7</div>
+      <div class="phase-content">
+        <h4>[Opcional / Arquitectura C] Evaluación de LLM total</h4>
+        <p>Solo si se identifican casos de uso que requieren razonamiento abierto: soporte multi-dominio,
+        auditoría regulatoria con explicaciones en lenguaje natural, o onboarding de nuevos modelos
+        sin tiempo para acumular historial. El costo operativo de C (~$1.44–14.4/mes) es manejable;
+        el riesgo es el no-determinismo y la dependencia de disponibilidad del API.
+        Evaluar contra A+B antes de migrar.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-green mt-20">
+    <strong>Recomendación final:</strong> implementar Arquitectura A completa (pasos 1–4) como base sólida.
+    El ExperienceStore con ≥100 registros etiquetados es el dato que hace útil al LLM en B —
+    sin él, el meta-agent razona sobre contexto vacío. Arquitectura C solo si aparecen requisitos
+    de razonamiento abierto que A+B no cubren. El no-determinismo de C es un costo real en
+    sistemas de producción que requieren auditoría o certificación.
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// Activate nav links on scroll
+const sections = document.querySelectorAll('.section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { threshold: 0.25 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
